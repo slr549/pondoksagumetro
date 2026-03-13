@@ -26,7 +26,7 @@ export default function RegisterPage() {
       },
     });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { console.error("Register error:", error.message); toast.error("Pendaftaran gagal. Silakan coba lagi."); return; }
     toast.success("Pendaftaran berhasil! Cek email untuk konfirmasi.");
     navigate("/login");
   };
