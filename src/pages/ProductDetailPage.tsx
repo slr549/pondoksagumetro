@@ -1,7 +1,8 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Star, ArrowLeft, Plus, Minus, ShoppingCart } from "lucide-react";
-import { products, formatPrice } from "@/data/products";
+import { formatPrice } from "@/data/products";
+import { useProduct, useProducts } from "@/hooks/useProducts";
 import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,9 +10,18 @@ import ProductCard from "@/components/ProductCard";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
-  const product = products.find((p) => p.id === id);
+  const { data: product, isLoading } = useProduct(id);
+  const { data: allProducts = [] } = useProducts();
   const { addToCart } = useCart();
   const [qty, setQty] = useState(1);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center pt-16">
+        <p className="text-muted-foreground">Memuat produk...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -21,7 +31,9 @@ export default function ProductDetailPage() {
     );
   }
 
-  const related = products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const related = allProducts
+    .filter((p) => p.category_id === product.category_id && p.id !== product.id)
+    .slice(0, 4);
 
   const handleAdd = () => {
     for (let i = 0; i < qty; i++) addToCart(product);
@@ -41,7 +53,7 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             className="overflow-hidden rounded-xl shadow-card"
           >
-            <img src={product.image} alt={product.name} className="aspect-square w-full object-cover" />
+            <img src={product.image_url || "/placeholder.svg"} alt={product.name} className="aspect-square w-full object-cover" />
           </motion.div>
 
           <motion.div
@@ -49,16 +61,16 @@ export default function ProductDetailPage() {
             animate={{ opacity: 1, x: 0 }}
             className="flex flex-col justify-center"
           >
-            <span className="text-xs font-semibold uppercase tracking-widest text-primary">{product.category}</span>
+            <span className="text-xs font-semibold uppercase tracking-widest text-primary">{product.categories?.name}</span>
             <h1 className="mt-1 text-section font-display font-bold text-foreground">{product.name}</h1>
 
             <div className="mt-3 flex items-center gap-2">
               <div className="flex items-center gap-1">
                 <Star className="h-4 w-4 fill-primary text-primary" />
-                <span className="text-sm font-medium tabular-nums">{product.rating}</span>
+                <span className="text-sm font-medium tabular-nums">{product.avg_rating ?? 0}</span>
               </div>
-              <span className="text-sm text-muted-foreground">({product.reviewCount} ulasan)</span>
-              {product.isBestSeller && (
+              <span className="text-sm text-muted-foreground">({product.review_count ?? 0} ulasan)</span>
+              {product.is_best_seller && (
                 <span className="rounded-md bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Best Seller</span>
               )}
             </div>
@@ -88,7 +100,7 @@ export default function ProductDetailPage() {
             </div>
 
             <p className="mt-3 text-xs text-muted-foreground">
-              Stok: <span className="tabular-nums">{product.stock}</span> tersedia
+              Stok: <span className="tabular-nums">{product.stock_quantity}</span> tersedia
             </p>
           </motion.div>
         </div>
