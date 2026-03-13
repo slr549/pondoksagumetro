@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { products, categories, Category } from "@/data/products";
+import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 
 export default function MenuPage() {
   const [searchParams] = useSearchParams();
-  const initialCat = searchParams.get("category") as Category | null;
-  const [activeCategory, setActiveCategory] = useState<Category | "Semua">(initialCat || "Semua");
+  const initialCat = searchParams.get("category") || "Semua";
+  const [activeCategory, setActiveCategory] = useState(initialCat);
+
+  const { data: products = [], isLoading: loadingProducts } = useProducts();
+  const { data: categories = [] } = useCategories();
 
   const filtered = activeCategory === "Semua"
     ? products
-    : products.filter((p) => p.category === activeCategory);
+    : products.filter((p) => p.categories?.name === activeCategory);
+
+  const categoryNames = ["Semua", ...categories.map((c) => c.name)];
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -20,7 +25,7 @@ export default function MenuPage() {
 
         {/* Category filter */}
         <div className="sticky top-16 z-30 -mx-4 mt-6 flex gap-2 overflow-x-auto bg-background/80 px-4 py-3 backdrop-blur-xl">
-          {(["Semua", ...categories] as const).map((cat) => (
+          {categoryNames.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
@@ -36,13 +41,17 @@ export default function MenuPage() {
         </div>
 
         {/* Products grid */}
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((p, i) => (
-            <ProductCard key={p.id} product={p} index={i} />
-          ))}
-        </div>
+        {loadingProducts ? (
+          <div className="mt-12 text-center text-muted-foreground">Memuat produk...</div>
+        ) : (
+          <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+            {filtered.map((p, i) => (
+              <ProductCard key={p.id} product={p} index={i} />
+            ))}
+          </div>
+        )}
 
-        {filtered.length === 0 && (
+        {!loadingProducts && filtered.length === 0 && (
           <p className="mt-12 text-center text-muted-foreground">Tidak ada produk di kategori ini.</p>
         )}
       </div>

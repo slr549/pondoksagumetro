@@ -2,7 +2,8 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Star, MapPin, Clock, ChevronRight } from "lucide-react";
 import heroBg from "@/assets/hero-bg.jpg";
-import { products, categories, formatPrice } from "@/data/products";
+import { formatPrice } from "@/data/products";
+import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
 
 const reviews = [
@@ -12,7 +13,9 @@ const reviews = [
 ];
 
 export default function Index() {
-  const bestSellers = products.filter((p) => p.isBestSeller);
+  const { data: products = [] } = useProducts();
+  const { data: categories = [] } = useCategories();
+  const bestSellers = products.filter((p) => p.is_best_seller);
 
   return (
     <div className="min-h-screen">
@@ -76,16 +79,16 @@ export default function Index() {
           <div className="mt-6 grid grid-cols-3 gap-4">
             {categories.map((cat) => (
               <Link
-                key={cat}
-                to={`/menu?category=${cat}`}
+                key={cat.id}
+                to={`/menu?category=${cat.name}`}
                 className="group flex flex-col items-center gap-3 rounded-xl bg-card p-6 shadow-card transition-shadow hover:shadow-elevated"
               >
                 <span className="text-2xl">
-                  {cat === "Dessert" ? "🍮" : cat === "Makanan" ? "🍛" : "🥤"}
+                  {cat.name === "Dessert" ? "🍮" : cat.name === "Makanan" ? "🍛" : "🥤"}
                 </span>
-                <span className="font-display text-sm font-semibold text-foreground">{cat}</span>
+                <span className="font-display text-sm font-semibold text-foreground">{cat.name}</span>
                 <span className="text-xs text-muted-foreground">
-                  {products.filter((p) => p.category === cat).length} produk
+                  {products.filter((p) => p.categories?.name === cat.name).length} produk
                 </span>
               </Link>
             ))}

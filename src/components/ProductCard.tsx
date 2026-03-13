@@ -32,12 +32,12 @@ export default function ProductCard({ product, index = 0 }: Props) {
         <div className="overflow-hidden rounded-xl bg-card shadow-card transition-shadow duration-200 hover:shadow-elevated">
           <div className="relative aspect-square overflow-hidden">
             <img
-              src={product.image}
+              src={product.image_url || "/placeholder.svg"}
               alt={product.name}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
-            {product.isBestSeller && (
+            {product.is_best_seller && (
               <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
                 Best Seller
               </span>
@@ -56,8 +56,8 @@ export default function ProductCard({ product, index = 0 }: Props) {
             </div>
             <div className="mt-2 flex items-center gap-1">
               <Star className="h-3.5 w-3.5 fill-primary text-primary" />
-              <span className="text-xs font-medium text-foreground tabular-nums">{product.rating}</span>
-              <span className="text-xs text-muted-foreground">({product.reviewCount})</span>
+              <span className="text-xs font-medium text-foreground tabular-nums">{product.avg_rating ?? 0}</span>
+              <span className="text-xs text-muted-foreground">({product.review_count ?? 0})</span>
             </div>
             <div className="mt-2 flex items-center justify-between">
               <span className="font-display text-base font-bold text-foreground tabular-nums">
