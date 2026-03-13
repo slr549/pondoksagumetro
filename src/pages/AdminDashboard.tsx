@@ -85,7 +85,7 @@ export default function AdminDashboard() {
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center pt-16"><p className="text-muted-foreground">Loading...</p></div>;
-  if (!isAdmin) return null;
+  if (!adminVerified) return null;
 
   const tabs: { key: AdminTab; icon: any; label: string }[] = [
     { key: "overview", icon: LayoutDashboard, label: "Overview" },
