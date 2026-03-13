@@ -17,7 +17,7 @@ export default function LoginPage() {
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
-    if (error) { toast.error(error.message); return; }
+    if (error) { console.error("Login error:", error.message); toast.error("Email atau password salah. Silakan coba lagi."); return; }
     toast.success("Login berhasil!");
     navigate("/");
   };

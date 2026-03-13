@@ -20,17 +20,36 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalProducts: 0, totalCustomers: 0 });
 
-  useEffect(() => {
-    if (!loading && (!user || !isAdmin)) {
-      navigate("/");
-      toast.error("Akses ditolak. Anda bukan admin.");
-    }
-  }, [user, isAdmin, loading, navigate]);
+  const [adminVerified, setAdminVerified] = useState(false);
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (loading) return;
+    if (!user) {
+      navigate("/");
+      toast.error("Akses ditolak.");
+      return;
+    }
+    // Server-side admin verification
+    supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) {
+          navigate("/");
+          toast.error("Akses ditolak. Anda bukan admin.");
+        } else {
+          setAdminVerified(true);
+        }
+      });
+  }, [user, loading, navigate]);
+
+  useEffect(() => {
+    if (!adminVerified) return;
     loadData();
-  }, [isAdmin]);
+  }, [adminVerified]);
 
   const loadData = async () => {
     const [prodRes, ordRes, catRes] = await Promise.all([
@@ -66,7 +85,7 @@ export default function AdminDashboard() {
   };
 
   if (loading) return <div className="flex min-h-screen items-center justify-center pt-16"><p className="text-muted-foreground">Loading...</p></div>;
-  if (!isAdmin) return null;
+  if (!adminVerified) return null;
 
   const tabs: { key: AdminTab; icon: any; label: string }[] = [
     { key: "overview", icon: LayoutDashboard, label: "Overview" },
