@@ -35,7 +35,7 @@ export default function CartPage() {
               exit={{ opacity: 0, y: -10 }}
               className="flex gap-4 rounded-xl bg-card p-4 shadow-card"
             >
-              <img src={item.product.image} alt={item.product.name} className="h-20 w-20 rounded-lg object-cover" />
+              <img src={item.product.image_url || "/placeholder.svg"} alt={item.product.name} className="h-20 w-20 rounded-lg object-cover" />
               <div className="flex flex-1 flex-col justify-between">
                 <div>
                   <h3 className="font-display text-sm font-semibold text-foreground">{item.product.name}</h3>
