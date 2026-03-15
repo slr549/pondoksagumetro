@@ -8,6 +8,8 @@ import {
   Plus, Pencil, Trash2, ChevronDown, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import ProductFormDialog from "@/components/admin/ProductFormDialog";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
