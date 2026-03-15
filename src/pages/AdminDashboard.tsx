@@ -21,6 +21,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalProducts: 0, totalCustomers: 0 });
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   const [adminVerified, setAdminVerified] = useState(false);
 
