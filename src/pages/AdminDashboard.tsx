@@ -8,6 +8,8 @@ import {
   Plus, Pencil, Trash2, ChevronDown, ArrowLeft,
 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import ProductFormDialog from "@/components/admin/ProductFormDialog";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
@@ -19,6 +21,8 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalProducts: 0, totalCustomers: 0 });
+  const [productDialogOpen, setProductDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   const [adminVerified, setAdminVerified] = useState(false);
 
@@ -179,6 +183,9 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-display font-semibold text-foreground">Kelola Produk</h3>
+                  <Button size="sm" onClick={() => { setEditingProduct(null); setProductDialogOpen(true); }}>
+                    <Plus className="h-4 w-4" /> Tambah Produk
+                  </Button>
                 </div>
                 <div className="space-y-2">
                   {products.map((p) => (
@@ -189,11 +196,19 @@ export default function AdminDashboard() {
                         <p className="text-xs text-muted-foreground">{p.categories?.name} · Stok: {p.stock_quantity}</p>
                       </div>
                       <p className="text-sm font-bold text-foreground tabular-nums">{formatPrice(p.price)}</p>
+                      <button onClick={() => { setEditingProduct(p); setProductDialogOpen(true); }} className="text-muted-foreground hover:text-foreground"><Pencil className="h-4 w-4" /></button>
                       <button onClick={() => deleteProduct(p.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
                     </div>
                   ))}
                   {products.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">Belum ada produk di database.</p>}
                 </div>
+                <ProductFormDialog
+                  open={productDialogOpen}
+                  onOpenChange={setProductDialogOpen}
+                  product={editingProduct}
+                  categories={categories}
+                  onSaved={loadData}
+                />
               </div>
             )}
 
