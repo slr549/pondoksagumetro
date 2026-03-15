@@ -10,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
+import CategoryManager from "@/components/admin/CategoryManager";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
