@@ -256,19 +256,7 @@ export default function AdminDashboard() {
 
             {/* Categories */}
             {tab === "categories" && (
-              <div>
-                <h3 className="font-display font-semibold text-foreground mb-4">Kategori</h3>
-                <div className="space-y-2">
-                  {categories.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-card">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{c.name}</p>
-                        <p className="text-xs text-muted-foreground">/{c.slug}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <CategoryManager categories={categories} onChanged={loadData} />
             )}
 
             {/* Reports */}
