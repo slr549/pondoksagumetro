@@ -46,6 +46,9 @@ export default function LoginPage() {
               </button>
             </div>
           </div>
+          <div className="flex items-center justify-between mt-1">
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">Lupa password?</Link>
+          </div>
           <button type="submit" disabled={loading}
             className="w-full rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50">
             {loading ? "Memproses..." : "Masuk"}
