@@ -1,9 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import { Package, Heart, User, LogOut, Shield } from "lucide-react";
+import { Package, Heart, User, LogOut, Shield, Camera, Save, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function UserDashboard() {
   const { user, signOut, isAdmin } = useAuth();
@@ -12,12 +13,96 @@ export default function UserDashboard() {
   const [wishlist, setWishlist] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"orders" | "wishlist" | "profile">("orders");
 
+  // Profile edit state
+  const [editName, setEditName] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (!user) return;
-    supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => setProfile(data));
+    supabase.from("profiles").select("*").eq("id", user.id).single().then(({ data }) => {
+      setProfile(data);
+      setEditName(data?.full_name || "");
+      setEditPhone(data?.phone || "");
+    });
     supabase.from("orders").select("*, order_items(*)").eq("user_id", user.id).order("created_at", { ascending: false }).then(({ data }) => setOrders(data || []));
     supabase.from("wishlist").select("*, products(*)").eq("user_id", user.id).then(({ data }) => setWishlist(data || []));
   }, [user]);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("File harus berupa gambar");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 2MB");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    const ext = file.name.split(".").pop();
+    const path = `${user.id}/avatar.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("avatars")
+      .upload(path, file, { upsert: true });
+
+    if (uploadError) {
+      toast.error("Gagal mengunggah foto");
+      setUploadingAvatar(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+    const avatar_url = `${urlData.publicUrl}?t=${Date.now()}`;
+
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .update({ avatar_url })
+      .eq("id", user.id);
+
+    if (updateError) {
+      toast.error("Gagal menyimpan foto profil");
+    } else {
+      setProfile((prev: any) => ({ ...prev, avatar_url }));
+      toast.success("Foto profil diperbarui");
+    }
+    setUploadingAvatar(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    const trimmedName = editName.trim();
+    const trimmedPhone = editPhone.trim();
+
+    if (trimmedName.length > 100) {
+      toast.error("Nama maksimal 100 karakter");
+      return;
+    }
+    if (trimmedPhone && !/^[0-9+\-\s()]{0,20}$/.test(trimmedPhone)) {
+      toast.error("Nomor telepon tidak valid");
+      return;
+    }
+
+    setSaving(true);
+    const { error } = await supabase
+      .from("profiles")
+      .update({ full_name: trimmedName || null, phone: trimmedPhone || null })
+      .eq("id", user.id);
+
+    if (error) {
+      toast.error("Gagal menyimpan profil");
+    } else {
+      setProfile((prev: any) => ({ ...prev, full_name: trimmedName, phone: trimmedPhone }));
+      toast.success("Profil diperbarui");
+    }
+    setSaving(false);
+  };
 
   if (!user) {
     return (
@@ -124,19 +209,61 @@ export default function UserDashboard() {
         {/* Profile */}
         {activeTab === "profile" && (
           <div className="mt-6 rounded-xl bg-card p-6 shadow-card">
-            <div className="space-y-3">
+            {/* Avatar */}
+            <div className="mb-6 flex flex-col items-center gap-3">
+              <div className="relative">
+                <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-secondary">
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
+                  ) : (
+                    <User className="h-8 w-8 text-muted-foreground" />
+                  )}
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar}
+                  className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md transition-colors hover:bg-primary/90 disabled:opacity-50"
+                >
+                  {uploadingAvatar ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              </div>
+              <p className="text-xs text-muted-foreground">Maks. 2MB (JPG, PNG)</p>
+            </div>
+
+            <div className="space-y-4">
               <div>
-                <span className="text-xs text-muted-foreground">Email</span>
-                <p className="text-sm text-foreground">{user.email}</p>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Email</label>
+                <p className="rounded-lg bg-secondary px-3 py-2 text-sm text-foreground">{user.email}</p>
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Nama</span>
-                <p className="text-sm text-foreground">{profile?.full_name || "-"}</p>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Nama Lengkap</label>
+                <input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  maxLength={100}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="Masukkan nama lengkap"
+                />
               </div>
               <div>
-                <span className="text-xs text-muted-foreground">Telepon</span>
-                <p className="text-sm text-foreground">{profile?.phone || "-"}</p>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">Nomor Telepon</label>
+                <input
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  maxLength={20}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  placeholder="08xxxxxxxxxx"
+                />
               </div>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              >
+                {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Simpan Profil
+              </button>
             </div>
           </div>
         )}
