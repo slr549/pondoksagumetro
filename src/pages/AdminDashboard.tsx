@@ -216,43 +216,7 @@ export default function AdminDashboard() {
 
             {/* Orders */}
             {tab === "orders" && (
-              <div>
-                <h3 className="font-display font-semibold text-foreground mb-4">Kelola Pesanan</h3>
-                <div className="space-y-2">
-                  {orders.map((o) => (
-                    <div key={o.id} className="rounded-xl bg-card p-4 shadow-card">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{o.customer_name}</p>
-                          <p className="text-xs text-muted-foreground">{o.customer_phone} · {new Date(o.created_at).toLocaleDateString("id-ID")}</p>
-                        </div>
-                        <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusColors[o.status] || ""}`}>{o.status.replace(/_/g, " ")}</span>
-                      </div>
-                      <div className="mt-2 space-y-1">
-                        {o.order_items?.map((item: any) => (
-                          <div key={item.id} className="flex justify-between text-xs text-muted-foreground">
-                            <span>{item.product_name} x{item.quantity}</span>
-                            <span className="tabular-nums">{formatPrice(item.price_at_purchase * item.quantity)}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
-                        <span className="font-display text-sm font-bold text-foreground tabular-nums">{formatPrice(o.total_price)}</span>
-                        <select value={o.status}
-                          onChange={(e) => updateOrderStatus(o.id, e.target.value)}
-                          className="rounded-lg border border-border bg-background px-2 py-1 text-xs text-foreground">
-                          <option value="pending">Pending</option>
-                          <option value="confirmed">Confirmed</option>
-                          <option value="ready_for_pickup">Ready</option>
-                          <option value="completed">Completed</option>
-                          <option value="cancelled">Cancelled</option>
-                        </select>
-                      </div>
-                    </div>
-                  ))}
-                  {orders.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">Belum ada pesanan.</p>}
-                </div>
-              </div>
+              <OrderManager orders={orders} onChanged={loadData} />
             )}
 
             {/* Categories */}
