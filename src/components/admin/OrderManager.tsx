@@ -2,9 +2,13 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
-import { Search, Filter, Clock, Phone, User, MapPin, ChevronDown, ChevronUp, Trash2, Download } from "lucide-react";
+import { format } from "date-fns";
+import { Search, Filter, Clock, Phone, User, MapPin, ChevronDown, ChevronUp, Trash2, Download, CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
