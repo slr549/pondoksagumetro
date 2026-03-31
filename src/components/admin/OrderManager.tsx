@@ -69,9 +69,12 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
         o.customer_phone.includes(search) ||
         o.id.toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter === "all" || o.status === statusFilter;
-      return matchSearch && matchStatus;
+      const orderDate = new Date(o.created_at);
+      const matchDateFrom = !dateFrom || orderDate >= new Date(dateFrom.setHours(0, 0, 0, 0));
+      const matchDateTo = !dateTo || orderDate <= new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+      return matchSearch && matchStatus && matchDateFrom && matchDateTo;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, dateFrom, dateTo]);
 
   const updateStatus = async (orderId: string, status: string) => {
     const { error } = await supabase
