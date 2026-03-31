@@ -100,9 +100,41 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
     return counts;
   }, [orders]);
 
+  const exportCSV = () => {
+    const rows = [["ID", "Tanggal", "Nama", "Telepon", "Metode", "Pickup", "Status", "Item", "Total"]];
+    filtered.forEach((o) => {
+      const items = (o.order_items || []).map((i: any) => `${i.product_name} x${i.quantity}`).join("; ");
+      rows.push([
+        o.id,
+        new Date(o.created_at).toLocaleString("id-ID"),
+        o.customer_name,
+        o.customer_phone,
+        o.order_method,
+        o.pickup_time || "-",
+        o.status,
+        items,
+        o.total_price,
+      ]);
+    });
+    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pesanan-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filtered.length} pesanan diekspor ke CSV.`);
+  };
+
   return (
     <div>
-      <h3 className="font-display font-semibold text-foreground mb-4">Kelola Pesanan</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-display font-semibold text-foreground">Kelola Pesanan</h3>
+        <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}>
+          <Download className="h-4 w-4 mr-1.5" /> Export CSV
+        </Button>
+      </div>
 
       {/* Status summary pills */}
       <div className="flex flex-wrap gap-2 mb-4">
