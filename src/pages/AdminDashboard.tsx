@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
+import OrderManager from "@/components/admin/OrderManager";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
