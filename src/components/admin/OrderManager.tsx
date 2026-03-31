@@ -180,6 +180,38 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
         />
       </div>
 
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateFrom ? format(dateFrom, "dd MMM yyyy") : "Dari tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        <span className="text-xs text-muted-foreground">—</span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateTo ? format(dateTo, "dd MMM yyyy") : "Sampai tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        {(dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+            <X className="h-3.5 w-3.5" /> Reset
+          </Button>
+        )}
+      </div>
+
       {/* Orders list */}
       <div className="space-y-3">
         {filtered.map((o) => {
