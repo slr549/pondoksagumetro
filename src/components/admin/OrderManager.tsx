@@ -58,6 +58,8 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
