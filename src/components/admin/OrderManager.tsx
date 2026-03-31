@@ -2,9 +2,13 @@ import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
-import { Search, Filter, Clock, Phone, User, MapPin, ChevronDown, ChevronUp, Trash2, Download } from "lucide-react";
+import { format } from "date-fns";
+import { Search, Filter, Clock, Phone, User, MapPin, ChevronDown, ChevronUp, Trash2, Download, CalendarIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -54,6 +58,8 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
 
   const filtered = useMemo(() => {
     return orders.filter((o) => {
@@ -63,9 +69,12 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
         o.customer_phone.includes(search) ||
         o.id.toLowerCase().includes(search.toLowerCase());
       const matchStatus = statusFilter === "all" || o.status === statusFilter;
-      return matchSearch && matchStatus;
+      const orderDate = new Date(o.created_at);
+      const matchDateFrom = !dateFrom || orderDate >= new Date(dateFrom.setHours(0, 0, 0, 0));
+      const matchDateTo = !dateTo || orderDate <= new Date(new Date(dateTo).setHours(23, 59, 59, 999));
+      return matchSearch && matchStatus && matchDateFrom && matchDateTo;
     });
-  }, [orders, search, statusFilter]);
+  }, [orders, search, statusFilter, dateFrom, dateTo]);
 
   const updateStatus = async (orderId: string, status: string) => {
     const { error } = await supabase
@@ -169,6 +178,38 @@ export default function OrderManager({ orders, onChanged }: OrderManagerProps) {
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
         />
+      </div>
+
+      {/* Date range filter */}
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateFrom && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateFrom ? format(dateFrom, "dd MMM yyyy") : "Dari tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        <span className="text-xs text-muted-foreground">—</span>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="sm" className={cn("h-8 text-xs gap-1.5", !dateTo && "text-muted-foreground")}>
+              <CalendarIcon className="h-3.5 w-3.5" />
+              {dateTo ? format(dateTo, "dd MMM yyyy") : "Sampai tanggal"}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus className="p-3 pointer-events-auto" />
+          </PopoverContent>
+        </Popover>
+        {(dateFrom || dateTo) && (
+          <Button variant="ghost" size="sm" className="h-8 text-xs gap-1 text-muted-foreground" onClick={() => { setDateFrom(undefined); setDateTo(undefined); }}>
+            <X className="h-3.5 w-3.5" /> Reset
+          </Button>
+        )}
       </div>
 
       {/* Orders list */}
