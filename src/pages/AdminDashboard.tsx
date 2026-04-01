@@ -149,10 +149,13 @@ export default function AdminDashboard() {
           {/* Sidebar */}
           <div className="hidden w-56 shrink-0 md:block">
             <div className="sticky top-20 space-y-1">
-              {tabs.map(({ key, icon: Icon, label }) => (
+              {tabs.map(({ key, icon: Icon, label, badge }) => (
                 <button key={key} onClick={() => setTab(key)}
                   className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${tab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary hover:text-foreground"}`}>
                   <Icon className="h-4 w-4" /> {label}
+                  {badge != null && badge > 0 && (
+                    <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground">{badge}</span>
+                  )}
                 </button>
               ))}
             </div>
