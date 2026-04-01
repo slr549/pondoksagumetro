@@ -55,6 +55,32 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!adminVerified) return;
     loadData();
+
+    // Real-time subscription for new orders
+    const channel = supabase
+      .channel('admin-orders')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'orders' },
+        (payload) => {
+          const newOrder = payload.new as any;
+          toast.info(`Pesanan baru dari ${newOrder.customer_name}`, {
+            description: `Total: ${formatPrice(newOrder.total_price)}`,
+            duration: 8000,
+          });
+          loadData();
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [adminVerified]);
 
   const loadData = async () => {
