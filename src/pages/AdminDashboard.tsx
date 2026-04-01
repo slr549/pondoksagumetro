@@ -163,10 +163,13 @@ export default function AdminDashboard() {
 
           {/* Mobile tabs */}
           <div className="flex gap-2 overflow-x-auto md:hidden -mx-4 px-4 pb-2 mb-4">
-            {tabs.map(({ key, icon: Icon, label }) => (
+            {tabs.map(({ key, icon: Icon, label, badge }) => (
               <button key={key} onClick={() => setTab(key)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${tab === key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
+                className={`relative flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${tab === key ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"}`}>
                 <Icon className="h-3.5 w-3.5" /> {label}
+                {badge != null && badge > 0 && (
+                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">{badge}</span>
+                )}
               </button>
             ))}
           </div>
