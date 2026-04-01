@@ -261,29 +261,7 @@ export default function AdminDashboard() {
 
             {/* Reports */}
             {tab === "reports" && (
-              <div>
-                <h3 className="font-display font-semibold text-foreground mb-4">Laporan Penjualan</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="rounded-xl bg-card p-4 shadow-card">
-                    <p className="text-xs text-muted-foreground">Revenue Bulan Ini</p>
-                    <p className="mt-1 font-display text-xl font-bold text-foreground tabular-nums">{formatPrice(stats.totalRevenue)}</p>
-                  </div>
-                  <div className="rounded-xl bg-card p-4 shadow-card">
-                    <p className="text-xs text-muted-foreground">Pesanan Bulan Ini</p>
-                    <p className="mt-1 font-display text-xl font-bold text-foreground tabular-nums">{stats.totalOrders}</p>
-                  </div>
-                </div>
-                <div className="mt-6 rounded-xl bg-card p-4 shadow-card">
-                  <p className="text-xs text-muted-foreground mb-3">Best Sellers</p>
-                  {products.filter(p => p.is_best_seller).map(p => (
-                    <div key={p.id} className="flex justify-between py-1 text-sm">
-                      <span className="text-foreground">{p.name}</span>
-                      <span className="tabular-nums text-muted-foreground">{formatPrice(p.price)}</span>
-                    </div>
-                  ))}
-                  {products.filter(p => p.is_best_seller).length === 0 && <p className="text-sm text-muted-foreground">Belum ada best seller.</p>}
-                </div>
-              </div>
+              <OrderAnalytics orders={orders} products={products} />
             )}
           </div>
         </div>
