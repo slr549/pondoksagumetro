@@ -119,10 +119,12 @@ export default function AdminDashboard() {
   if (loading) return <div className="flex min-h-screen items-center justify-center pt-16"><p className="text-muted-foreground">Loading...</p></div>;
   if (!adminVerified) return null;
 
-  const tabs: { key: AdminTab; icon: any; label: string }[] = [
+  const pendingCount = orders.filter((o: any) => o.status === "pending").length;
+
+  const tabs: { key: AdminTab; icon: any; label: string; badge?: number }[] = [
     { key: "overview", icon: LayoutDashboard, label: "Overview" },
     { key: "products", icon: Package, label: "Produk" },
-    { key: "orders", icon: ShoppingBag, label: "Pesanan" },
+    { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount },
     { key: "categories", icon: Tag, label: "Kategori" },
     { key: "reports", icon: BarChart3, label: "Laporan" },
   ];
