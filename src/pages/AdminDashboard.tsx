@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
 import OrderManager from "@/components/admin/OrderManager";
+import OrderAnalytics from "@/components/admin/OrderAnalytics";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
