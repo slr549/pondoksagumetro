@@ -4,7 +4,10 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, ShoppingBag, DollarSign, Package, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, ShoppingBag, DollarSign, Package, Clock, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface OrderAnalyticsProps {
   orders: any[];
@@ -88,6 +91,74 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
     return { totalRevenue, avgOrderValue, totalOrders: filteredOrders.length, completedCount, pendingCount };
   }, [filteredOrders]);
 
+  const exportPDF = () => {
+    const doc = new jsPDF();
+    const now = new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+    const periodLabel = period === "7d" ? "7 Hari Terakhir" : period === "30d" ? "30 Hari Terakhir" : "Semua Waktu";
+
+    doc.setFontSize(18);
+    doc.text("Laporan Analitik Pesanan", 14, 20);
+    doc.setFontSize(10);
+    doc.setTextColor(100);
+    doc.text(`Periode: ${periodLabel} — Dicetak: ${now}`, 14, 28);
+
+    // Summary
+    doc.setFontSize(12);
+    doc.setTextColor(0);
+    doc.text("Ringkasan", 14, 40);
+    autoTable(doc, {
+      startY: 44,
+      head: [["Total Revenue", "Total Pesanan", "Rata-rata Order", "Menunggu"]],
+      body: [[formatPrice(stats.totalRevenue), String(stats.totalOrders), formatPrice(stats.avgOrderValue), String(stats.pendingCount)]],
+      theme: "grid",
+      headStyles: { fillColor: [34, 139, 34] },
+    });
+
+    // Revenue by day
+    const tableEnd1 = (doc as any).lastAutoTable?.finalY || 60;
+    doc.setFontSize(12);
+    doc.text("Revenue Harian", 14, tableEnd1 + 10);
+    if (revenueByDay.length > 0) {
+      autoTable(doc, {
+        startY: tableEnd1 + 14,
+        head: [["Tanggal", "Revenue", "Jumlah Pesanan"]],
+        body: revenueByDay.map((r) => [r.name, formatPrice(r.revenue), String(r.orders)]),
+        theme: "striped",
+        headStyles: { fillColor: [34, 139, 34] },
+      });
+    }
+
+    // Top products
+    const tableEnd2 = (doc as any).lastAutoTable?.finalY || tableEnd1 + 20;
+    doc.setFontSize(12);
+    doc.text("Produk Terlaris", 14, tableEnd2 + 10);
+    if (topProducts.length > 0) {
+      autoTable(doc, {
+        startY: tableEnd2 + 14,
+        head: [["Produk", "Qty Terjual", "Revenue"]],
+        body: topProducts.map((p) => [p.name, String(p.qty), formatPrice(p.revenue)]),
+        theme: "striped",
+        headStyles: { fillColor: [34, 139, 34] },
+      });
+    }
+
+    // Status breakdown
+    const tableEnd3 = (doc as any).lastAutoTable?.finalY || tableEnd2 + 20;
+    doc.setFontSize(12);
+    doc.text("Status Pesanan", 14, tableEnd3 + 10);
+    if (ordersByStatus.length > 0) {
+      autoTable(doc, {
+        startY: tableEnd3 + 14,
+        head: [["Status", "Jumlah"]],
+        body: ordersByStatus.map((s) => [s.name, String(s.value)]),
+        theme: "striped",
+        headStyles: { fillColor: [34, 139, 34] },
+      });
+    }
+
+    doc.save(`laporan-analitik-${period}.pdf`);
+  };
+
   const tooltipStyle = {
     contentStyle: {
       backgroundColor: "hsl(220, 20%, 12%)",
@@ -103,18 +174,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold text-foreground">Analitik Pesanan</h3>
-        <div className="flex gap-1 rounded-lg bg-secondary p-1">
-          {([["7d", "7 Hari"], ["30d", "30 Hari"], ["all", "Semua"]] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setPeriod(key)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                period === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 rounded-lg bg-secondary p-1">
+            {([["7d", "7 Hari"], ["30d", "30 Hari"], ["all", "Semua"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  period === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" variant="outline" onClick={exportPDF}>
+            <FileDown className="h-4 w-4" /> Export PDF
+          </Button>
         </div>
       </div>
 
