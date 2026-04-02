@@ -29,12 +29,17 @@ export default function AdminDashboard() {
 
   const [adminVerified, setAdminVerified] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     audioRef.current = new Audio("/notification.wav");
     audioRef.current.volume = 0.7;
   }, []);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (loading) return;
