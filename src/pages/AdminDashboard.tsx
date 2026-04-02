@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,18 @@ export default function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<any | null>(null);
 
   const [adminVerified, setAdminVerified] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const soundEnabledRef = useRef(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    audioRef.current = new Audio("/notification.wav");
+    audioRef.current.volume = 0.7;
+  }, []);
+
+  useEffect(() => {
+    soundEnabledRef.current = soundEnabled;
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (loading) return;
@@ -65,6 +77,10 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           const newOrder = payload.new as any;
+          if (soundEnabledRef.current && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {});
+          }
           toast.info(`Pesanan baru dari ${newOrder.customer_name}`, {
             description: `Total: ${formatPrice(newOrder.total_price)}`,
             duration: 8000,
@@ -144,6 +160,13 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
           <h1 className="text-section font-display font-bold text-foreground">Admin Panel</h1>
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={`ml-auto rounded-lg p-2 text-sm transition-colors ${soundEnabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
+            title={soundEnabled ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </button>
         </div>
 
         <div className="flex gap-6">
