@@ -155,6 +155,13 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
           <h1 className="text-section font-display font-bold text-foreground">Admin Panel</h1>
+          <button
+            onClick={() => setSoundEnabled(!soundEnabled)}
+            className={`ml-auto rounded-lg p-2 text-sm transition-colors ${soundEnabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
+            title={soundEnabled ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
+          >
+            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+          </button>
         </div>
 
         <div className="flex gap-6">
