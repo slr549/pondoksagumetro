@@ -174,18 +174,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold text-foreground">Analitik Pesanan</h3>
-        <div className="flex gap-1 rounded-lg bg-secondary p-1">
-          {([["7d", "7 Hari"], ["30d", "30 Hari"], ["all", "Semua"]] as const).map(([key, label]) => (
-            <button
-              key={key}
-              onClick={() => setPeriod(key)}
-              className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
-                period === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1 rounded-lg bg-secondary p-1">
+            {([["7d", "7 Hari"], ["30d", "30 Hari"], ["all", "Semua"]] as const).map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setPeriod(key)}
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                  period === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <Button size="sm" variant="outline" onClick={exportPDF}>
+            <FileDown className="h-4 w-4" /> Export PDF
+          </Button>
         </div>
       </div>
 
