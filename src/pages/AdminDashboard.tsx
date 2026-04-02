@@ -144,6 +144,7 @@ export default function AdminDashboard() {
     { key: "products", icon: Package, label: "Produk" },
     { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount },
     { key: "categories", icon: Tag, label: "Kategori" },
+    { key: "customers", icon: Users, label: "Pelanggan" },
     { key: "reports", icon: BarChart3, label: "Laporan" },
   ];
 
