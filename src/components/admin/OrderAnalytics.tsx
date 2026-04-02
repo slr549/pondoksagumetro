@@ -81,6 +81,21 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
       .slice(0, 5);
   }, [filteredOrders]);
 
+  // Previous period orders for comparison
+  const previousOrders = useMemo(() => {
+    if (period === "all") return [];
+    const days = period === "7d" ? 7 : 30;
+    const now = new Date();
+    const currentCutoff = new Date();
+    currentCutoff.setDate(now.getDate() - days);
+    const prevCutoff = new Date();
+    prevCutoff.setDate(now.getDate() - days * 2);
+    return orders.filter((o) => {
+      const d = new Date(o.created_at);
+      return d >= prevCutoff && d < currentCutoff;
+    });
+  }, [orders, period]);
+
   // Summary stats
   const stats = useMemo(() => {
     const valid = filteredOrders.filter((o) => o.status !== "cancelled");
@@ -90,6 +105,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
     const pendingCount = filteredOrders.filter((o) => o.status === "pending").length;
     return { totalRevenue, avgOrderValue, totalOrders: filteredOrders.length, completedCount, pendingCount };
   }, [filteredOrders]);
+
+  // Growth comparison
+  const growth = useMemo(() => {
+    if (period === "all" || previousOrders.length === 0) return null;
+    const prevValid = previousOrders.filter((o) => o.status !== "cancelled");
+    const prevRevenue = prevValid.reduce((s, o) => s + o.total_price, 0);
+    const prevOrders = previousOrders.length;
+    const prevAvg = prevValid.length ? Math.round(prevRevenue / prevValid.length) : 0;
+
+    const pct = (curr: number, prev: number) => prev === 0 ? (curr > 0 ? 100 : 0) : Math.round(((curr - prev) / prev) * 100);
+
+    return {
+      revenue: pct(stats.totalRevenue, prevRevenue),
+      orders: pct(stats.totalOrders, prevOrders),
+      avgOrder: pct(stats.avgOrderValue, prevAvg),
+    };
+  }, [stats, previousOrders, period]);
 
   const exportPDF = () => {
     const doc = new jsPDF();
@@ -197,13 +229,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-6">
         {[
-          { label: "Total Revenue", value: formatPrice(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
-          { label: "Total Pesanan", value: stats.totalOrders, icon: ShoppingBag, color: "text-blue-400" },
-          { label: "Rata-rata Order", value: formatPrice(stats.avgOrderValue), icon: TrendingUp, color: "text-purple-400" },
+          { label: "Total Revenue", value: formatPrice(stats.totalRevenue), icon: DollarSign, color: "text-primary", growth: growth?.revenue },
+          { label: "Total Pesanan", value: stats.totalOrders, icon: ShoppingBag, color: "text-blue-400", growth: growth?.orders },
+          { label: "Rata-rata Order", value: formatPrice(stats.avgOrderValue), icon: TrendingUp, color: "text-purple-400", growth: growth?.avgOrder },
           { label: "Menunggu", value: stats.pendingCount, icon: Clock, color: "text-yellow-400" },
         ].map((s, i) => (
           <div key={i} className="rounded-xl bg-card p-4 shadow-card">
-            <s.icon className={`h-5 w-5 ${s.color}`} />
+            <div className="flex items-center justify-between">
+              <s.icon className={`h-5 w-5 ${s.color}`} />
+              {s.growth != null && period !== "all" && (
+                <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  s.growth >= 0 ? "bg-green-500/15 text-green-400" : "bg-destructive/15 text-destructive"
+                }`}>
+                  {s.growth >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {s.growth >= 0 ? "+" : ""}{s.growth}%
+                </span>
+              )}
+            </div>
             <p className="mt-2 font-display text-lg font-bold text-foreground tabular-nums">{s.value}</p>
             <p className="text-xs text-muted-foreground">{s.label}</p>
           </div>
