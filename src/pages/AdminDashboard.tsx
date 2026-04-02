@@ -13,6 +13,7 @@ import ProductFormDialog from "@/components/admin/ProductFormDialog";
 import CategoryManager from "@/components/admin/CategoryManager";
 import OrderManager from "@/components/admin/OrderManager";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
+import CustomerManager from "@/components/admin/CustomerManager";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
 
@@ -143,6 +144,7 @@ export default function AdminDashboard() {
     { key: "products", icon: Package, label: "Produk" },
     { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount },
     { key: "categories", icon: Tag, label: "Kategori" },
+    { key: "customers", icon: Users, label: "Pelanggan" },
     { key: "reports", icon: BarChart3, label: "Laporan" },
   ];
 
@@ -280,6 +282,11 @@ export default function AdminDashboard() {
             {/* Categories */}
             {tab === "categories" && (
               <CategoryManager categories={categories} onChanged={loadData} />
+            )}
+
+            {/* Customers */}
+            {tab === "customers" && (
+              <CustomerManager orders={orders} />
             )}
 
             {/* Reports */}
