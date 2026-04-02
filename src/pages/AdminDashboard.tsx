@@ -284,6 +284,11 @@ export default function AdminDashboard() {
               <CategoryManager categories={categories} onChanged={loadData} />
             )}
 
+            {/* Customers */}
+            {tab === "customers" && (
+              <CustomerManager orders={orders} />
+            )}
+
             {/* Reports */}
             {tab === "reports" && (
               <OrderAnalytics orders={orders} products={products} />
