@@ -72,6 +72,10 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           const newOrder = payload.new as any;
+          if (soundEnabled && audioRef.current) {
+            audioRef.current.currentTime = 0;
+            audioRef.current.play().catch(() => {});
+          }
           toast.info(`Pesanan baru dari ${newOrder.customer_name}`, {
             description: `Total: ${formatPrice(newOrder.total_price)}`,
             duration: 8000,
