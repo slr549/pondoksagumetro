@@ -229,13 +229,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
       {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 mb-6">
         {[
-          { label: "Total Revenue", value: formatPrice(stats.totalRevenue), icon: DollarSign, color: "text-primary" },
-          { label: "Total Pesanan", value: stats.totalOrders, icon: ShoppingBag, color: "text-blue-400" },
-          { label: "Rata-rata Order", value: formatPrice(stats.avgOrderValue), icon: TrendingUp, color: "text-purple-400" },
+          { label: "Total Revenue", value: formatPrice(stats.totalRevenue), icon: DollarSign, color: "text-primary", growth: growth?.revenue },
+          { label: "Total Pesanan", value: stats.totalOrders, icon: ShoppingBag, color: "text-blue-400", growth: growth?.orders },
+          { label: "Rata-rata Order", value: formatPrice(stats.avgOrderValue), icon: TrendingUp, color: "text-purple-400", growth: growth?.avgOrder },
           { label: "Menunggu", value: stats.pendingCount, icon: Clock, color: "text-yellow-400" },
         ].map((s, i) => (
           <div key={i} className="rounded-xl bg-card p-4 shadow-card">
-            <s.icon className={`h-5 w-5 ${s.color}`} />
+            <div className="flex items-center justify-between">
+              <s.icon className={`h-5 w-5 ${s.color}`} />
+              {s.growth != null && period !== "all" && (
+                <span className={`inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
+                  s.growth >= 0 ? "bg-green-500/15 text-green-400" : "bg-destructive/15 text-destructive"
+                }`}>
+                  {s.growth >= 0 ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+                  {s.growth >= 0 ? "+" : ""}{s.growth}%
+                </span>
+              )}
+            </div>
             <p className="mt-2 font-display text-lg font-bold text-foreground tabular-nums">{s.value}</p>
             <p className="text-xs text-muted-foreground">{s.label}</p>
           </div>
