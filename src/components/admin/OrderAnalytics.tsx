@@ -81,6 +81,21 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
       .slice(0, 5);
   }, [filteredOrders]);
 
+  // Previous period orders for comparison
+  const previousOrders = useMemo(() => {
+    if (period === "all") return [];
+    const days = period === "7d" ? 7 : 30;
+    const now = new Date();
+    const currentCutoff = new Date();
+    currentCutoff.setDate(now.getDate() - days);
+    const prevCutoff = new Date();
+    prevCutoff.setDate(now.getDate() - days * 2);
+    return orders.filter((o) => {
+      const d = new Date(o.created_at);
+      return d >= prevCutoff && d < currentCutoff;
+    });
+  }, [orders, period]);
+
   // Summary stats
   const stats = useMemo(() => {
     const valid = filteredOrders.filter((o) => o.status !== "cancelled");
@@ -90,6 +105,23 @@ export default function OrderAnalytics({ orders, products }: OrderAnalyticsProps
     const pendingCount = filteredOrders.filter((o) => o.status === "pending").length;
     return { totalRevenue, avgOrderValue, totalOrders: filteredOrders.length, completedCount, pendingCount };
   }, [filteredOrders]);
+
+  // Growth comparison
+  const growth = useMemo(() => {
+    if (period === "all" || previousOrders.length === 0) return null;
+    const prevValid = previousOrders.filter((o) => o.status !== "cancelled");
+    const prevRevenue = prevValid.reduce((s, o) => s + o.total_price, 0);
+    const prevOrders = previousOrders.length;
+    const prevAvg = prevValid.length ? Math.round(prevRevenue / prevValid.length) : 0;
+
+    const pct = (curr: number, prev: number) => prev === 0 ? (curr > 0 ? 100 : 0) : Math.round(((curr - prev) / prev) * 100);
+
+    return {
+      revenue: pct(stats.totalRevenue, prevRevenue),
+      orders: pct(stats.totalOrders, prevOrders),
+      avgOrder: pct(stats.avgOrderValue, prevAvg),
+    };
+  }, [stats, previousOrders, period]);
 
   const exportPDF = () => {
     const doc = new jsPDF();
