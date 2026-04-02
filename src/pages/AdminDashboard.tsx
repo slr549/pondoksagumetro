@@ -77,7 +77,7 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           const newOrder = payload.new as any;
-          if (soundEnabled && audioRef.current) {
+          if (soundEnabledRef.current && audioRef.current) {
             audioRef.current.currentTime = 0;
             audioRef.current.play().catch(() => {});
           }
