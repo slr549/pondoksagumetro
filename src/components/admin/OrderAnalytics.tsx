@@ -4,7 +4,10 @@ import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
-import { TrendingUp, TrendingDown, ShoppingBag, DollarSign, Package, Clock } from "lucide-react";
+import { TrendingUp, TrendingDown, ShoppingBag, DollarSign, Package, Clock, FileDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 interface OrderAnalyticsProps {
   orders: any[];
