@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import { Search, ChevronDown, ChevronUp, Mail, Phone, ShoppingBag } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Mail, Phone, ShoppingBag, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Customer {
   user_id: string;
@@ -73,11 +75,38 @@ export default function CustomerManager({ orders }: { orders: any[] }) {
       .filter((o) => (o.user_id || o.customer_phone) === customerId)
       .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+  const exportCSV = () => {
+    const rows = [["Nama", "Telepon", "Total Pesanan", "Total Belanja", "Pesanan Terakhir"]];
+    filtered.forEach((c) => {
+      rows.push([
+        c.customer_name,
+        c.customer_phone,
+        String(c.total_orders),
+        String(c.total_spent),
+        new Date(c.last_order).toLocaleDateString("id-ID"),
+      ]);
+    });
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `pelanggan-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${filtered.length} pelanggan diekspor ke CSV.`);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold text-foreground">Kelola Pelanggan</h3>
-        <p className="text-xs text-muted-foreground">{customers.length} pelanggan</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-muted-foreground">{customers.length} pelanggan</p>
+          <Button variant="outline" size="sm" onClick={exportCSV} disabled={filtered.length === 0}>
+            <Download className="h-4 w-4 mr-1.5" /> Export CSV
+          </Button>
+        </div>
       </div>
 
       <div className="relative mb-4">
