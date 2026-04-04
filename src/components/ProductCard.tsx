@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { Star, Plus } from "lucide-react";
+import { Star, Plus, Heart } from "lucide-react";
 import { Product, formatPrice } from "@/data/products";
 import { useCart } from "@/context/CartContext";
-import { Link } from "react-router-dom";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useAuth } from "@/context/AuthContext";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 interface Props {
@@ -12,12 +14,31 @@ interface Props {
 
 export default function ProductCard({ product, index = 0 }: Props) {
   const { addToCart } = useCart();
+  const { user } = useAuth();
+  const { wishlistIds, toggleWishlist, isToggling } = useWishlist();
+  const navigate = useNavigate();
+  const isWished = wishlistIds.includes(product.id);
 
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     addToCart(product);
     toast.success(`${product.name} ditambahkan ke keranjang`);
+  };
+
+  const handleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.error("Silakan login untuk menyimpan favorit");
+      navigate("/login");
+      return;
+    }
+    toggleWishlist(product.id, {
+      onSuccess: (result) => {
+        toast.success(result.added ? `${product.name} ditambahkan ke wishlist` : `${product.name} dihapus dari wishlist`);
+      },
+    });
   };
 
   return (
@@ -42,6 +63,17 @@ export default function ProductCard({ product, index = 0 }: Props) {
                 Best Seller
               </span>
             )}
+            <button
+              onClick={handleWishlist}
+              disabled={isToggling}
+              className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-background/80 backdrop-blur-sm transition-colors hover:bg-background"
+            >
+              <Heart
+                className={`h-4 w-4 transition-colors ${
+                  isWished ? "fill-destructive text-destructive" : "text-muted-foreground"
+                }`}
+              />
+            </button>
           </div>
           <div className="p-3">
             <div className="flex items-start justify-between gap-2">
