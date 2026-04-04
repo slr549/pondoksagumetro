@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import { Search, ChevronDown, ChevronUp, Mail, Phone, ShoppingBag } from "lucide-react";
+import { Search, ChevronDown, ChevronUp, Mail, Phone, ShoppingBag, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface Customer {
   user_id: string;
