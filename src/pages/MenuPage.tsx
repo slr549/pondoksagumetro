@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { AnimatePresence, LayoutGroup } from "framer-motion";
 import { useSearchParams } from "react-router-dom";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
@@ -288,11 +289,15 @@ export default function MenuPage() {
         {loadingProducts ? (
           <div className="mt-12 text-center text-muted-foreground">Memuat produk...</div>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
-            {filtered.map((p, i) => (
-              <ProductCard key={p.id} product={p} index={i} />
-            ))}
-          </div>
+          <LayoutGroup>
+            <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((p, i) => (
+                  <ProductCard key={p.id} product={p} index={i} />
+                ))}
+              </AnimatePresence>
+            </div>
+          </LayoutGroup>
         )}
 
         {!loadingProducts && filtered.length === 0 && (

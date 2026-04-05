@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Star, Plus, Heart } from "lucide-react";
 import { Product, formatPrice } from "@/data/products";
 import { useCart } from "@/context/CartContext";
@@ -43,9 +43,11 @@ export default function ProductCard({ product, index = 0 }: Props) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.07 }}
+      layout
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ duration: 0.3, delay: index * 0.03, layout: { duration: 0.3 } }}
       whileHover={{ y: -4 }}
       className="group"
     >
