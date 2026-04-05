@@ -54,6 +54,54 @@
     --shadow-cta: 0 0 0 1px hsl(140 70% 45% / 0.5), 0 1px 2px -1px hsl(0 0% 0% / 0.5), 0 2px 4px hsl(0 0% 0% / 0.3);
     --shadow-elevated: 0 4px 16px hsl(0 0% 0% / 0.3), 0 8px 32px hsl(0 0% 0% / 0.2);
   }
+
+  .light {
+    --background: 0 0% 100%;
+    --foreground: 220 25% 10%;
+
+    --card: 220 15% 97%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+
+    --primary: 140 70% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 93%;
+    --secondary-foreground: 220 25% 10%;
+
+    --muted: 220 15% 95%;
+    --muted-foreground: 220 10% 45%;
+
+    --accent: 140 70% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 140 70% 45%;
+
+    --sidebar-background: 220 15% 96%;
+    --sidebar-foreground: 220 25% 10%;
+    --sidebar-primary: 140 70% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 15% 93%;
+    --sidebar-accent-foreground: 220 25% 10%;
+    --sidebar-border: 220 15% 88%;
+    --sidebar-ring: 140 70% 45%;
+
+    /* Custom tokens */
+    --surface-elevated: 220 15% 95%;
+    --surface-overlay: 0 0% 100%;
+    --primary-glow: 140 70% 45%;
+    --gradient-primary: linear-gradient(135deg, hsl(140 70% 38%), hsl(140 70% 48%));
+    --shadow-card: 0 0 0 1px hsl(220 15% 88%), 0 2px 4px hsl(0 0% 0% / 0.04), 0 4px 12px hsl(0 0% 0% / 0.04);
+    --shadow-cta: 0 0 0 1px hsl(140 70% 38% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.1), 0 2px 4px hsl(0 0% 0% / 0.06);
+    --shadow-elevated: 0 4px 16px hsl(0 0% 0% / 0.06), 0 8px 32px hsl(0 0% 0% / 0.04);
+  }
 }
 
 @layer base {
