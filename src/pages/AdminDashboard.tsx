@@ -172,13 +172,43 @@ export default function AdminDashboard() {
         <div className="flex items-center gap-3 mb-6">
           <Link to="/dashboard" className="text-muted-foreground hover:text-foreground"><ArrowLeft className="h-5 w-5" /></Link>
           <h1 className="text-section font-display font-bold text-foreground">Admin Panel</h1>
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            className={`ml-auto rounded-lg p-2 text-sm transition-colors ${soundEnabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
-            title={soundEnabled ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
-          >
-            {soundEnabled ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-          </button>
+          <div className="ml-auto relative flex items-center gap-1">
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              className={`rounded-lg p-2 text-sm transition-colors ${soundEnabled ? "text-primary hover:bg-primary/10" : "text-muted-foreground hover:bg-secondary"}`}
+              title={soundEnabled ? "Matikan suara notifikasi" : "Nyalakan suara notifikasi"}
+            >
+              {!soundEnabled ? <VolumeX className="h-5 w-5" /> : volume > 50 ? <Volume2 className="h-5 w-5" /> : <Volume1 className="h-5 w-5" />}
+            </button>
+            {soundEnabled && (
+              <button
+                onClick={() => setShowVolumeSlider(!showVolumeSlider)}
+                className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                title="Atur volume"
+              >
+                <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showVolumeSlider ? "rotate-180" : ""}`} />
+              </button>
+            )}
+            {showVolumeSlider && soundEnabled && (
+              <div className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-card p-3 shadow-card border border-border min-w-[200px]">
+                <p className="text-xs text-muted-foreground mb-2">Volume: {Math.round(volume)}%</p>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={volume}
+                  onChange={(e) => setVolume(Number(e.target.value))}
+                  className="w-full accent-primary h-1.5 cursor-pointer"
+                />
+                <button
+                  onClick={() => { if (audioRef.current) { audioRef.current.currentTime = 0; audioRef.current.play().catch(() => {}); } }}
+                  className="mt-2 w-full rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                >
+                  Test Suara
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-6">
