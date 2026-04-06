@@ -35,14 +35,17 @@ export default function AdminDashboard() {
     const saved = localStorage.getItem("admin-notif-volume");
     return saved ? parseFloat(saved) : 70;
   });
+  const [selectedSound, setSelectedSound] = useState(() => {
+    return localStorage.getItem("admin-notif-sound") || "chime";
+  });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const soundEnabledRef = useRef(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const selectedSoundRef = useRef(selectedSound);
 
   useEffect(() => {
-    audioRef.current = new Audio("/notification.wav");
-    audioRef.current.volume = volume / 100;
-  }, []);
+    selectedSoundRef.current = selectedSound;
+    localStorage.setItem("admin-notif-sound", selectedSound);
+  }, [selectedSound]);
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
