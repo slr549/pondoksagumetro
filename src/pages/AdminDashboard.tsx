@@ -48,6 +48,11 @@ export default function AdminDashboard() {
   }, [soundEnabled]);
 
   useEffect(() => {
+    if (audioRef.current) audioRef.current.volume = volume / 100;
+    localStorage.setItem("admin-notif-volume", String(volume));
+  }, [volume]);
+
+  useEffect(() => {
     if (loading) return;
     if (!user) {
       navigate("/");
