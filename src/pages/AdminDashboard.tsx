@@ -40,7 +40,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     audioRef.current = new Audio("/notification.wav");
-    audioRef.current.volume = 0.7;
+    audioRef.current.volume = volume / 100;
   }, []);
 
   useEffect(() => {
