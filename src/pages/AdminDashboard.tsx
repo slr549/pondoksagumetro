@@ -30,6 +30,11 @@ export default function AdminDashboard() {
 
   const [adminVerified, setAdminVerified] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem("admin-notif-volume");
+    return saved ? parseFloat(saved) : 70;
+  });
+  const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const soundEnabledRef = useRef(true);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
