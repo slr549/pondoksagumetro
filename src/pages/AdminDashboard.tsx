@@ -5,8 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music,
 } from "lucide-react";
+import { SOUND_OPTIONS, playNotificationSound } from "@/lib/notificationSounds";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
@@ -34,21 +35,23 @@ export default function AdminDashboard() {
     const saved = localStorage.getItem("admin-notif-volume");
     return saved ? parseFloat(saved) : 70;
   });
+  const [selectedSound, setSelectedSound] = useState(() => {
+    return localStorage.getItem("admin-notif-sound") || "chime";
+  });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const soundEnabledRef = useRef(true);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const selectedSoundRef = useRef(selectedSound);
 
   useEffect(() => {
-    audioRef.current = new Audio("/notification.wav");
-    audioRef.current.volume = volume / 100;
-  }, []);
+    selectedSoundRef.current = selectedSound;
+    localStorage.setItem("admin-notif-sound", selectedSound);
+  }, [selectedSound]);
 
   useEffect(() => {
     soundEnabledRef.current = soundEnabled;
   }, [soundEnabled]);
 
   useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume / 100;
     localStorage.setItem("admin-notif-volume", String(volume));
   }, [volume]);
 
@@ -88,9 +91,8 @@ export default function AdminDashboard() {
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
           const newOrder = payload.new as any;
-          if (soundEnabledRef.current && audioRef.current) {
-            audioRef.current.currentTime = 0;
-            audioRef.current.play().catch(() => {});
+          if (soundEnabledRef.current) {
+            playNotificationSound(selectedSoundRef.current, volume);
           }
           toast.info(`Pesanan baru dari ${newOrder.customer_name}`, {
             description: `Total: ${formatPrice(newOrder.total_price)}`,
@@ -190,7 +192,7 @@ export default function AdminDashboard() {
               </button>
             )}
             {showVolumeSlider && soundEnabled && (
-              <div className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-card p-3 shadow-card border border-border min-w-[200px]">
+              <div className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-card p-3 shadow-card border border-border min-w-[220px]">
                 <p className="text-xs text-muted-foreground mb-2">Volume: {Math.round(volume)}%</p>
                 <input
                   type="range"
@@ -200,9 +202,22 @@ export default function AdminDashboard() {
                   onChange={(e) => setVolume(Number(e.target.value))}
                   className="w-full accent-primary h-1.5 cursor-pointer"
                 />
+                <p className="text-xs text-muted-foreground mt-3 mb-1.5">Suara Notifikasi</p>
+                <div className="space-y-1">
+                  {SOUND_OPTIONS.map((s) => (
+                    <button
+                      key={s.id}
+                      onClick={() => { setSelectedSound(s.id); playNotificationSound(s.id, volume); }}
+                      className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${selectedSound === s.id ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}
+                    >
+                      <Music className="h-3 w-3" />
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
                 <button
-                  onClick={() => { if (audioRef.current) { audioRef.current.currentTime = 0; audioRef.current.play().catch(() => {}); } }}
-                  className="mt-2 w-full rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
+                  onClick={() => playNotificationSound(selectedSound, volume)}
+                  className="mt-3 w-full rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
                 >
                   Test Suara
                 </button>
