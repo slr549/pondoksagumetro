@@ -1,15 +1,24 @@
 export type SoundOption = {
   id: string;
   label: string;
+  isCustom?: boolean;
+  url?: string;
 };
 
-export const SOUND_OPTIONS: SoundOption[] = [
+export const BUILT_IN_SOUNDS: SoundOption[] = [
   { id: "chime", label: "Chime" },
   { id: "bell", label: "Bell" },
   { id: "ding", label: "Ding" },
   { id: "pop", label: "Pop" },
   { id: "alert", label: "Alert" },
 ];
+
+// Merged list used by UI — built-in + custom
+export let SOUND_OPTIONS: SoundOption[] = [...BUILT_IN_SOUNDS];
+
+export function setSoundOptions(custom: SoundOption[]) {
+  SOUND_OPTIONS = [...BUILT_IN_SOUNDS, ...custom];
+}
 
 let audioCtx: AudioContext | null = null;
 
@@ -19,16 +28,20 @@ function getAudioContext(): AudioContext {
 }
 
 export function playNotificationSound(soundId: string, volume: number) {
-  const ctx = getAudioContext();
-  const gain = ctx.createGain();
-  gain.connect(ctx.destination);
-  gain.gain.value = volume / 100;
+  // Check if it's a custom sound
+  const opt = SOUND_OPTIONS.find(s => s.id === soundId);
+  if (opt?.isCustom && opt.url) {
+    const audio = new Audio(opt.url);
+    audio.volume = volume / 100;
+    audio.play().catch(() => {});
+    return;
+  }
 
+  const ctx = getAudioContext();
   const now = ctx.currentTime;
 
   switch (soundId) {
     case "chime": {
-      // Two-tone chime
       [523.25, 659.25].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         osc.type = "sine";
@@ -43,7 +56,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "bell": {
-      // Bell-like tone with harmonics
       [880, 1760, 2640].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         osc.type = "sine";
@@ -59,7 +71,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "ding": {
-      // Quick high ding
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.value = 1200;
@@ -72,7 +83,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "pop": {
-      // Short pop sound
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.setValueAtTime(600, now);
@@ -86,7 +96,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "alert": {
-      // Urgent two-tone alert
       [0, 0.2].forEach((offset, i) => {
         const osc = ctx.createOscillator();
         osc.type = "square";
