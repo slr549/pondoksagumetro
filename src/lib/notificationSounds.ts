@@ -28,16 +28,20 @@ function getAudioContext(): AudioContext {
 }
 
 export function playNotificationSound(soundId: string, volume: number) {
-  const ctx = getAudioContext();
-  const gain = ctx.createGain();
-  gain.connect(ctx.destination);
-  gain.gain.value = volume / 100;
+  // Check if it's a custom sound
+  const opt = SOUND_OPTIONS.find(s => s.id === soundId);
+  if (opt?.isCustom && opt.url) {
+    const audio = new Audio(opt.url);
+    audio.volume = volume / 100;
+    audio.play().catch(() => {});
+    return;
+  }
 
+  const ctx = getAudioContext();
   const now = ctx.currentTime;
 
   switch (soundId) {
     case "chime": {
-      // Two-tone chime
       [523.25, 659.25].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         osc.type = "sine";
@@ -52,7 +56,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "bell": {
-      // Bell-like tone with harmonics
       [880, 1760, 2640].forEach((freq, i) => {
         const osc = ctx.createOscillator();
         osc.type = "sine";
@@ -68,7 +71,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "ding": {
-      // Quick high ding
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.value = 1200;
@@ -81,7 +83,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "pop": {
-      // Short pop sound
       const osc = ctx.createOscillator();
       osc.type = "sine";
       osc.frequency.setValueAtTime(600, now);
@@ -95,7 +96,6 @@ export function playNotificationSound(soundId: string, volume: number) {
       break;
     }
     case "alert": {
-      // Urgent two-tone alert
       [0, 0.2].forEach((offset, i) => {
         const osc = ctx.createOscillator();
         osc.type = "square";
