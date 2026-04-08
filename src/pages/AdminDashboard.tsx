@@ -5,9 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X,
 } from "lucide-react";
-import { SOUND_OPTIONS, playNotificationSound } from "@/lib/notificationSounds";
+import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ProductFormDialog from "@/components/admin/ProductFormDialog";
@@ -39,8 +39,11 @@ export default function AdminDashboard() {
     return localStorage.getItem("admin-notif-sound") || "chime";
   });
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
+  const [uploadingSound, setUploadingSound] = useState(false);
+  const [customSounds, setCustomSounds] = useState<SoundOption[]>([]);
   const soundEnabledRef = useRef(true);
   const selectedSoundRef = useRef(selectedSound);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     selectedSoundRef.current = selectedSound;
@@ -55,6 +58,69 @@ export default function AdminDashboard() {
     localStorage.setItem("admin-notif-volume", String(volume));
   }, [volume]);
 
+  // Load custom sounds from storage
+  const loadCustomSounds = async () => {
+    const { data } = await supabase.storage.from("notification-sounds").list("", { limit: 50 });
+    if (data && data.length > 0) {
+      const sounds: SoundOption[] = data
+        .filter(f => /\.(mp3|wav|ogg|m4a|webm)$/i.test(f.name))
+        .map(f => {
+          const { data: urlData } = supabase.storage.from("notification-sounds").getPublicUrl(f.name);
+          return {
+            id: `custom-${f.name}`,
+            label: f.name.replace(/\.[^.]+$/, ""),
+            isCustom: true,
+            url: urlData.publicUrl,
+          };
+        });
+      setCustomSounds(sounds);
+      setSoundOptions(sounds);
+    }
+  };
+
+  useEffect(() => {
+    if (adminVerified) loadCustomSounds();
+  }, [adminVerified]);
+
+  const handleSoundUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowedTypes = ["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4", "audio/webm"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Format file tidak didukung. Gunakan MP3, WAV, OGG, M4A, atau WebM.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Ukuran file maksimal 2MB.");
+      return;
+    }
+
+    setUploadingSound(true);
+    const fileName = `${Date.now()}-${file.name}`;
+    const { error } = await supabase.storage.from("notification-sounds").upload(fileName, file);
+    if (error) {
+      toast.error("Gagal mengupload suara: " + error.message);
+    } else {
+      toast.success("Suara kustom berhasil diupload!");
+      await loadCustomSounds();
+    }
+    setUploadingSound(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const deleteCustomSound = async (sound: SoundOption) => {
+    const fileName = sound.id.replace("custom-", "");
+    const { error } = await supabase.storage.from("notification-sounds").remove([fileName]);
+    if (error) {
+      toast.error("Gagal menghapus suara.");
+      return;
+    }
+    if (selectedSound === sound.id) setSelectedSound("chime");
+    toast.success("Suara kustom dihapus.");
+    await loadCustomSounds();
+  };
+
   useEffect(() => {
     if (loading) return;
     if (!user) {
@@ -62,7 +128,6 @@ export default function AdminDashboard() {
       toast.error("Akses ditolak.");
       return;
     }
-    // Server-side admin verification
     supabase
       .from("user_roles")
       .select("role")
@@ -83,7 +148,6 @@ export default function AdminDashboard() {
     if (!adminVerified) return;
     loadData();
 
-    // Real-time subscription for new orders
     const channel = supabase
       .channel('admin-orders')
       .on(
@@ -168,6 +232,8 @@ export default function AdminDashboard() {
     cancelled: "bg-destructive/20 text-destructive",
   };
 
+  const allSounds = SOUND_OPTIONS;
+
   return (
     <div className="min-h-screen pt-20 pb-16">
       <div className="container mx-auto px-4">
@@ -192,7 +258,7 @@ export default function AdminDashboard() {
               </button>
             )}
             {showVolumeSlider && soundEnabled && (
-              <div className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-card p-3 shadow-card border border-border min-w-[220px]">
+              <div className="absolute right-0 top-full mt-2 z-50 rounded-xl bg-card p-3 shadow-card border border-border min-w-[250px] max-h-[400px] overflow-y-auto">
                 <p className="text-xs text-muted-foreground mb-2">Volume: {Math.round(volume)}%</p>
                 <input
                   type="range"
@@ -202,9 +268,9 @@ export default function AdminDashboard() {
                   onChange={(e) => setVolume(Number(e.target.value))}
                   className="w-full accent-primary h-1.5 cursor-pointer"
                 />
-                <p className="text-xs text-muted-foreground mt-3 mb-1.5">Suara Notifikasi</p>
+                <p className="text-xs text-muted-foreground mt-3 mb-1.5">Suara Bawaan</p>
                 <div className="space-y-1">
-                  {SOUND_OPTIONS.map((s) => (
+                  {allSounds.filter(s => !s.isCustom).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => { setSelectedSound(s.id); playNotificationSound(s.id, volume); }}
@@ -215,6 +281,50 @@ export default function AdminDashboard() {
                     </button>
                   ))}
                 </div>
+
+                {/* Custom sounds section */}
+                <p className="text-xs text-muted-foreground mt-3 mb-1.5">Suara Kustom</p>
+                <div className="space-y-1">
+                  {allSounds.filter(s => s.isCustom).map((s) => (
+                    <div key={s.id} className="flex items-center gap-1">
+                      <button
+                        onClick={() => { setSelectedSound(s.id); playNotificationSound(s.id, volume); }}
+                        className={`flex flex-1 items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${selectedSound === s.id ? "bg-primary text-primary-foreground" : "text-foreground hover:bg-secondary"}`}
+                      >
+                        <Music className="h-3 w-3" />
+                        <span className="truncate">{s.label}</span>
+                      </button>
+                      <button
+                        onClick={() => deleteCustomSound(s)}
+                        className="shrink-0 rounded p-1 text-destructive hover:bg-destructive/10 transition-colors"
+                        title="Hapus suara"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                  {allSounds.filter(s => s.isCustom).length === 0 && (
+                    <p className="text-[10px] text-muted-foreground py-1 px-2.5">Belum ada suara kustom.</p>
+                  )}
+                </div>
+
+                {/* Upload button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="audio/mpeg,audio/wav,audio/ogg,audio/mp4,audio/webm,.mp3,.wav,.ogg,.m4a,.webm"
+                  onChange={handleSoundUpload}
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingSound}
+                  className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors disabled:opacity-50"
+                >
+                  <Upload className="h-3 w-3" />
+                  {uploadingSound ? "Mengupload..." : "Upload Suara (.mp3, .wav, .ogg)"}
+                </button>
+
                 <button
                   onClick={() => playNotificationSound(selectedSound, volume)}
                   className="mt-3 w-full rounded-lg bg-secondary px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
@@ -257,7 +367,6 @@ export default function AdminDashboard() {
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            {/* Overview */}
             {tab === "overview" && (
               <div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -295,7 +404,6 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* Products */}
             {tab === "products" && (
               <div>
                 <div className="flex justify-between items-center mb-4">
@@ -329,22 +437,18 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {/* Orders */}
             {tab === "orders" && (
               <OrderManager orders={orders} onChanged={loadData} />
             )}
 
-            {/* Categories */}
             {tab === "categories" && (
               <CategoryManager categories={categories} onChanged={loadData} />
             )}
 
-            {/* Customers */}
             {tab === "customers" && (
               <CustomerManager orders={orders} />
             )}
 
-            {/* Reports */}
             {tab === "reports" && (
               <OrderAnalytics orders={orders} products={products} />
             )}
