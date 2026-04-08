@@ -1,15 +1,24 @@
 export type SoundOption = {
   id: string;
   label: string;
+  isCustom?: boolean;
+  url?: string;
 };
 
-export const SOUND_OPTIONS: SoundOption[] = [
+export const BUILT_IN_SOUNDS: SoundOption[] = [
   { id: "chime", label: "Chime" },
   { id: "bell", label: "Bell" },
   { id: "ding", label: "Ding" },
   { id: "pop", label: "Pop" },
   { id: "alert", label: "Alert" },
 ];
+
+// Merged list used by UI — built-in + custom
+export let SOUND_OPTIONS: SoundOption[] = [...BUILT_IN_SOUNDS];
+
+export function setSoundOptions(custom: SoundOption[]) {
+  SOUND_OPTIONS = [...BUILT_IN_SOUNDS, ...custom];
+}
 
 let audioCtx: AudioContext | null = null;
 
