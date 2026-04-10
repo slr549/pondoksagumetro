@@ -1,18 +1,56 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { MessageCircle, CreditCard, ArrowLeft } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { MessageCircle, CreditCard, ArrowLeft, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupTime, setPickupTime] = useState("");
   const [method, setMethod] = useState<"online" | "whatsapp">("whatsapp");
+  const [saving, setSaving] = useState(false);
+
+  const saveOrderToDB = async (orderMethod: "whatsapp" | "online_payment") => {
+    const { data: order, error: orderErr } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user?.id || null,
+        customer_name: name,
+        customer_phone: phone,
+        pickup_time: pickupTime,
+        total_price: totalPrice,
+        order_method: orderMethod,
+      })
+      .select("id")
+      .single();
+
+    if (orderErr || !order) {
+      console.error("Order insert error:", orderErr);
+      return null;
+    }
+
+    const orderItems = items.map((i) => ({
+      order_id: order.id,
+      product_id: i.product.id,
+      product_name: i.product.name,
+      quantity: i.quantity,
+      price_at_purchase: i.product.price,
+    }));
+
+    const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
+    if (itemsErr) {
+      console.error("Order items insert error:", itemsErr);
+    }
+
+    return order.id;
+  };
 
   if (items.length === 0) {
     return (
@@ -23,11 +61,14 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (!name || !phone || !pickupTime) {
       toast.error("Lengkapi semua informasi terlebih dahulu.");
       return;
     }
+    setSaving(true);
+    await saveOrderToDB("whatsapp");
+
     const orderItems = items
       .map((i) => `• ${i.product.name} x${i.quantity} — ${formatPrice(i.product.price * i.quantity)}`)
       .join("\n");
@@ -37,15 +78,21 @@ export default function CheckoutPage() {
     window.open(`https://wa.me/6281234567890?text=${msg}`, "_blank");
     clearCart();
     toast.success("Pesanan dikirim via WhatsApp!");
+    setSaving(false);
     navigate("/");
   };
 
-  const handleOnline = () => {
+  const handleOnline = async () => {
     if (!name || !phone || !pickupTime) {
       toast.error("Lengkapi semua informasi terlebih dahulu.");
       return;
     }
-    toast.info("Integrasi Midtrans akan segera tersedia. Gunakan WhatsApp untuk saat ini.");
+    setSaving(true);
+    await saveOrderToDB("online_payment");
+    clearCart();
+    toast.success("Pesanan berhasil dibuat!");
+    setSaving(false);
+    navigate("/");
   };
 
   return (
@@ -140,16 +187,15 @@ export default function CheckoutPage() {
 
         <button
           onClick={method === "whatsapp" ? handleWhatsApp : handleOnline}
-          className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97]"
+          disabled={saving}
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
         >
-          {method === "whatsapp" ? (
-            <>
-              <MessageCircle className="h-4 w-4" /> Pesan via WhatsApp
-            </>
+          {saving ? (
+            <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
+          ) : method === "whatsapp" ? (
+            <><MessageCircle className="h-4 w-4" /> Pesan via WhatsApp</>
           ) : (
-            <>
-              <CreditCard className="h-4 w-4" /> Bayar Sekarang
-            </>
+            <><CreditCard className="h-4 w-4" /> Bayar Sekarang</>
           )}
         </button>
       </div>

@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield,
 } from "lucide-react";
 import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
@@ -15,8 +15,9 @@ import CategoryManager from "@/components/admin/CategoryManager";
 import OrderManager from "@/components/admin/OrderManager";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
+import RoleManager from "@/components/admin/RoleManager";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles";
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
@@ -222,6 +223,7 @@ export default function AdminDashboard() {
     { key: "categories", icon: Tag, label: "Kategori" },
     { key: "customers", icon: Users, label: "Pelanggan" },
     { key: "reports", icon: BarChart3, label: "Laporan" },
+    { key: "roles", icon: Shield, label: "Role" },
   ];
 
   const statusColors: Record<string, string> = {
@@ -451,6 +453,10 @@ export default function AdminDashboard() {
 
             {tab === "reports" && (
               <OrderAnalytics orders={orders} products={products} />
+            )}
+
+            {tab === "roles" && (
+              <RoleManager />
             )}
           </div>
         </div>
