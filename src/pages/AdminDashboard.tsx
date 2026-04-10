@@ -15,8 +15,9 @@ import CategoryManager from "@/components/admin/CategoryManager";
 import OrderManager from "@/components/admin/OrderManager";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
+import RoleManager from "@/components/admin/RoleManager";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles";
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
