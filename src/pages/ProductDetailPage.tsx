@@ -116,6 +116,9 @@ export default function ProductDetailPage() {
             </div>
           </div>
         )}
+
+        {/* Reviews section */}
+        <ProductReviews productId={product.id} />
       </div>
     </div>
   );
