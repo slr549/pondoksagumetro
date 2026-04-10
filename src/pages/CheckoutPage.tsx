@@ -9,11 +9,48 @@ import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupTime, setPickupTime] = useState("");
   const [method, setMethod] = useState<"online" | "whatsapp">("whatsapp");
+  const [saving, setSaving] = useState(false);
+
+  const saveOrderToDB = async (orderMethod: "whatsapp" | "online_payment") => {
+    const { data: order, error: orderErr } = await supabase
+      .from("orders")
+      .insert({
+        user_id: user?.id || null,
+        customer_name: name,
+        customer_phone: phone,
+        pickup_time: pickupTime,
+        total_price: totalPrice,
+        order_method: orderMethod,
+      })
+      .select("id")
+      .single();
+
+    if (orderErr || !order) {
+      console.error("Order insert error:", orderErr);
+      return null;
+    }
+
+    const orderItems = items.map((i) => ({
+      order_id: order.id,
+      product_id: i.product.id,
+      product_name: i.product.name,
+      quantity: i.quantity,
+      price_at_purchase: i.product.price,
+    }));
+
+    const { error: itemsErr } = await supabase.from("order_items").insert(orderItems);
+    if (itemsErr) {
+      console.error("Order items insert error:", itemsErr);
+    }
+
+    return order.id;
+  };
 
   if (items.length === 0) {
     return (
