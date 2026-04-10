@@ -223,6 +223,7 @@ export default function AdminDashboard() {
     { key: "categories", icon: Tag, label: "Kategori" },
     { key: "customers", icon: Users, label: "Pelanggan" },
     { key: "reports", icon: BarChart3, label: "Laporan" },
+    { key: "roles", icon: Shield, label: "Role" },
   ];
 
   const statusColors: Record<string, string> = {
