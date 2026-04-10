@@ -61,11 +61,14 @@ export default function CheckoutPage() {
     );
   }
 
-  const handleWhatsApp = () => {
+  const handleWhatsApp = async () => {
     if (!name || !phone || !pickupTime) {
       toast.error("Lengkapi semua informasi terlebih dahulu.");
       return;
     }
+    setSaving(true);
+    await saveOrderToDB("whatsapp");
+
     const orderItems = items
       .map((i) => `• ${i.product.name} x${i.quantity} — ${formatPrice(i.product.price * i.quantity)}`)
       .join("\n");
@@ -75,15 +78,21 @@ export default function CheckoutPage() {
     window.open(`https://wa.me/6281234567890?text=${msg}`, "_blank");
     clearCart();
     toast.success("Pesanan dikirim via WhatsApp!");
+    setSaving(false);
     navigate("/");
   };
 
-  const handleOnline = () => {
+  const handleOnline = async () => {
     if (!name || !phone || !pickupTime) {
       toast.error("Lengkapi semua informasi terlebih dahulu.");
       return;
     }
-    toast.info("Integrasi Midtrans akan segera tersedia. Gunakan WhatsApp untuk saat ini.");
+    setSaving(true);
+    await saveOrderToDB("online_payment");
+    clearCart();
+    toast.success("Pesanan berhasil dibuat!");
+    setSaving(false);
+    navigate("/");
   };
 
   return (
