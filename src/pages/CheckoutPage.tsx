@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { MessageCircle, CreditCard, ArrowLeft } from "lucide-react";
+import { useNavigate, Link } from "react-router-dom";
+import { MessageCircle, CreditCard, ArrowLeft, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
