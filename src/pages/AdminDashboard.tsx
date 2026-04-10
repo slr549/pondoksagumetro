@@ -454,6 +454,10 @@ export default function AdminDashboard() {
             {tab === "reports" && (
               <OrderAnalytics orders={orders} products={products} />
             )}
+
+            {tab === "roles" && (
+              <RoleManager />
+            )}
           </div>
         </div>
       </div>
