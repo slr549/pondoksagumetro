@@ -187,16 +187,15 @@ export default function CheckoutPage() {
 
         <button
           onClick={method === "whatsapp" ? handleWhatsApp : handleOnline}
-          className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97]"
+          disabled={saving}
+          className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
         >
-          {method === "whatsapp" ? (
-            <>
-              <MessageCircle className="h-4 w-4" /> Pesan via WhatsApp
-            </>
+          {saving ? (
+            <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
+          ) : method === "whatsapp" ? (
+            <><MessageCircle className="h-4 w-4" /> Pesan via WhatsApp</>
           ) : (
-            <>
-              <CreditCard className="h-4 w-4" /> Bayar Sekarang
-            </>
+            <><CreditCard className="h-4 w-4" /> Bayar Sekarang</>
           )}
         </button>
       </div>

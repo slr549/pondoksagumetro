@@ -7,6 +7,7 @@ import { useCart } from "@/context/CartContext";
 import { useState } from "react";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
+import ProductReviews from "@/components/ProductReviews";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
