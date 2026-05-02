@@ -84,6 +84,10 @@ export type Database = {
           customer_phone: string
           id: string
           order_method: Database["public"]["Enums"]["order_method"]
+          paid_at: string | null
+          payment_order_id: string | null
+          payment_status: string | null
+          payment_token: string | null
           pickup_time: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_price: number
@@ -96,6 +100,10 @@ export type Database = {
           customer_phone: string
           id?: string
           order_method: Database["public"]["Enums"]["order_method"]
+          paid_at?: string | null
+          payment_order_id?: string | null
+          payment_status?: string | null
+          payment_token?: string | null
           pickup_time?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_price: number
@@ -108,6 +116,10 @@ export type Database = {
           customer_phone?: string
           id?: string
           order_method?: Database["public"]["Enums"]["order_method"]
+          paid_at?: string | null
+          payment_order_id?: string | null
+          payment_status?: string | null
+          payment_token?: string | null
           pickup_time?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_price?: number

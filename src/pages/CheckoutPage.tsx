@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
+import { openSnap } from "@/lib/midtrans";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -88,11 +89,41 @@ export default function CheckoutPage() {
       return;
     }
     setSaving(true);
-    await saveOrderToDB("online_payment");
-    clearCart();
-    toast.success("Pesanan berhasil dibuat!");
-    setSaving(false);
-    navigate("/");
+    try {
+      const orderId = await saveOrderToDB("online_payment");
+      if (!orderId) {
+        toast.error("Gagal membuat pesanan. Coba lagi.");
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke(
+        "create-midtrans-transaction",
+        { body: { orderId } },
+      );
+
+      if (error || !data?.token) {
+        console.error("Midtrans invoke error:", error, data);
+        toast.error("Gagal memulai pembayaran. Pastikan Midtrans sudah dikonfigurasi.");
+        return;
+      }
+
+      const result = await openSnap(data.token);
+      if (result.status === "success") {
+        clearCart();
+        toast.success("Pembayaran berhasil!");
+        navigate("/");
+      } else if (result.status === "pending") {
+        clearCart();
+        toast.info("Pembayaran menunggu konfirmasi.");
+        navigate("/");
+      } else if (result.status === "error") {
+        toast.error("Pembayaran gagal. Coba lagi.");
+      } else {
+        toast.info("Pembayaran dibatalkan.");
+      }
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
