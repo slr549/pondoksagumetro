@@ -67,7 +67,7 @@ export default function DatabaseBackup() {
       a.remove();
       URL.revokeObjectURL(downloadUrl);
 
-      const totalRows = Object.values(json.tables).reduce((sum: number, t: any) => sum + (t.count || 0), 0);
+      const totalRows = Object.values(json.tables).reduce<number>((sum, t: any) => sum + (t.count || 0), 0);
       saveHistory({
         date: new Date().toISOString(),
         filename,
