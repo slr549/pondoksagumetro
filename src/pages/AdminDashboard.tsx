@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
+import type { Tables, Enums } from "@/integrations/supabase/types";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
   Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database,
@@ -19,17 +21,20 @@ import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles" | "backup";
+type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
+type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
+type CategoryRow = Tables<"categories">;
 
 export default function AdminDashboard() {
   const { user, isAdmin, loading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("overview");
-  const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalProducts: 0, totalCustomers: 0 });
   const [productDialogOpen, setProductDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
 
   const [adminVerified, setAdminVerified] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -156,7 +161,7 @@ export default function AdminDashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
-          const newOrder = payload.new as any;
+          const newOrder = payload.new as OrderRow;
           if (soundEnabledRef.current) {
             playNotificationSound(selectedSoundRef.current, volume);
           }
@@ -177,7 +182,7 @@ export default function AdminDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [adminVerified]);
+  }, [adminVerified, volume]);
 
   const loadData = async () => {
     const [prodRes, ordRes, catRes] = await Promise.all([
@@ -189,17 +194,17 @@ export default function AdminDashboard() {
     setOrders(ordRes.data || []);
     setCategories(catRes.data || []);
 
-    const allOrders = ordRes.data || [];
+    const allOrders = (ordRes.data || []) as OrderRow[];
     setStats({
       totalOrders: allOrders.length,
-      totalRevenue: allOrders.filter((o: any) => o.status !== "cancelled").reduce((s: number, o: any) => s + o.total_price, 0),
+      totalRevenue: allOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + o.total_price, 0),
       totalProducts: (prodRes.data || []).length,
-      totalCustomers: new Set(allOrders.map((o: any) => o.user_id).filter(Boolean)).size,
+      totalCustomers: new Set(allOrders.map((o) => o.user_id).filter(Boolean)).size,
     });
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status: status as any }).eq("id", orderId);
+    const { error } = await supabase.from("orders").update({ status: status as Enums<"order_status"> }).eq("id", orderId);
     if (error) { toast.error("Gagal update status."); return; }
     toast.success("Status pesanan diperbarui.");
     loadData();
@@ -215,9 +220,9 @@ export default function AdminDashboard() {
   if (loading) return <div className="flex min-h-screen items-center justify-center pt-16"><p className="text-muted-foreground">Loading...</p></div>;
   if (!adminVerified) return null;
 
-  const pendingCount = orders.filter((o: any) => o.status === "pending").length;
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
 
-  const tabs: { key: AdminTab; icon: any; label: string; badge?: number }[] = [
+  const tabs: { key: AdminTab; icon: LucideIcon; label: string; badge?: number }[] = [
     { key: "overview", icon: LayoutDashboard, label: "Overview" },
     { key: "products", icon: Package, label: "Produk" },
     { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount },
