@@ -33,19 +33,20 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const backup: Record<string, unknown> = {
+    const tables: Record<string, { count?: number; rows: unknown[]; error?: string }> = {};
+    const backup = {
       generated_at: new Date().toISOString(),
       generated_by: user.email,
       version: 1,
-      tables: {},
+      tables,
     };
 
     for (const table of TABLES) {
       const { data, error } = await admin.from(table).select("*");
       if (error) {
-        backup.tables[table] = { error: error.message, rows: [] };
+        tables[table] = { error: error.message, rows: [] };
       } else {
-        backup.tables[table] = { count: data?.length ?? 0, rows: data ?? [] };
+        tables[table] = { count: data?.length ?? 0, rows: data ?? [] };
       }
     }
 
