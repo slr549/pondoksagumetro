@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowRight, Star, MapPin, Clock, ChevronRight } from "lucide-react";
@@ -13,13 +12,13 @@ const reviews = [
   { name: "Dewi S.", rating: 4, text: "Es campur segar dan manis, cocok di cuaca panas.", date: "2 minggu lalu" },
 ];
 
-const Index = forwardRef<HTMLDivElement>((_props, ref) => {
+export default function Index() {
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const bestSellers = products.filter((p) => p.is_best_seller);
 
   return (
-    <div ref={ref} className="min-h-screen">
+    <div className="min-h-screen">
       {/* Hero */}
       <section className="relative flex min-h-[100svh] items-center md:min-h-[70vh]">
         <div className="absolute inset-0 overflow-hidden">
@@ -176,6 +175,4 @@ const Index = forwardRef<HTMLDivElement>((_props, ref) => {
       </section>
     </div>
   );
-});
-Index.displayName = "Index";
-export default Index;
+}
