@@ -1,9 +1,8 @@
-import { forwardRef } from "react";
 import { MessageCircle, Instagram, Mail, MapPin } from "lucide-react";
 
-const Footer = forwardRef<HTMLElement>((_props, ref) => {
+export default function Footer() {
   return (
-    <footer ref={ref} className="border-t border-border bg-muted/50">
+    <footer className="border-t border-border bg-muted/50">
       <div className="container mx-auto px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           <div>
@@ -49,6 +48,4 @@ const Footer = forwardRef<HTMLElement>((_props, ref) => {
       </div>
     </footer>
   );
-});
-Footer.displayName = "Footer";
-export default Footer;
+}
