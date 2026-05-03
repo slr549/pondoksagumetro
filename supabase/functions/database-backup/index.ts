@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const backup: Record<string, any> = {
+    const backup: Record<string, unknown> = {
       generated_at: new Date().toISOString(),
       generated_by: user.email,
       version: 1,
