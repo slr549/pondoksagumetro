@@ -1,7 +1,7 @@
 // Midtrans Snap frontend helper.
 // Replace with your real client key (publishable, safe to expose).
 // Use the sandbox client key while testing, the production key when going live.
-export const MIDTRANS_CLIENT_KEY = "SB-Mid-client-XXXXXXXXXXXXXXXX";
+export const MIDTRANS_CLIENT_KEY = "SB-Mid-client-UVmZXsE3d2gYDMRT";
 
 // Sandbox snap.js. Switch to "https://app.midtrans.com/snap/snap.js" for production.
 const SNAP_SCRIPT_URL = "https://app.sandbox.midtrans.com/snap/snap.js";
