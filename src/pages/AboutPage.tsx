@@ -1,9 +1,15 @@
 import { motion } from "framer-motion";
 import { MapPin, Clock, Heart } from "lucide-react";
+import SEO from "@/components/SEO";
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen pt-24 pb-16">
+      <SEO
+        title="Tentang Pondok Sagu Metro — Kuliner Situgede"
+        description="Pondok Sagu Metro adalah usaha kuliner lokal di Situgede, Bogor. Dessert, makanan, dan minuman segar dengan resep turun-temurun."
+        path="/about"
+      />
       <div className="container mx-auto max-w-3xl px-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">Tentang Kami</span>
