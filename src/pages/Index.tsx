@@ -5,6 +5,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 import { formatPrice } from "@/data/products";
 import { useProducts, useCategories } from "@/hooks/useProducts";
 import ProductCard from "@/components/ProductCard";
+import SEO from "@/components/SEO";
 
 const reviews = [
   { name: "Siti R.", rating: 5, text: "Puding sagunya enak banget! Pasti balik lagi.", date: "2 hari lalu" },
@@ -19,10 +20,22 @@ export default function Index() {
 
   return (
     <div className="min-h-screen">
+      <SEO
+        title="Pondok Sagu Metro — Dessert & Kuliner Situgede"
+        description="Pesan dessert, makanan, dan minuman segar di Situgede, Bogor. Order online atau via WhatsApp."
+        path="/"
+      />
       {/* Hero */}
       <section className="relative flex min-h-[100svh] items-center md:min-h-[70vh]">
         <div className="absolute inset-0 overflow-hidden">
-          <img src={heroBg} alt="Pondok Sagu Metro food" className="h-full w-full object-cover" />
+          <img
+            src={heroBg}
+            alt="Pondok Sagu Metro food"
+            className="h-full w-full object-cover"
+            width={1920}
+            height={1080}
+            fetchPriority="high"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-background/40" />
         </div>
         <div className="container relative z-10 mx-auto px-4 py-32">
