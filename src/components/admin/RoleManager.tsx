@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Search, UserCog } from "lucide-react";
+import { Shield, Search, UserCog, CheckCircle2, XCircle, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 interface UserWithRole {
   id: string;
+  email: string | null;
+  email_confirmed_at: string | null;
+  last_sign_in_at: string | null;
   full_name: string | null;
   phone: string | null;
   created_at: string;
@@ -22,22 +25,45 @@ export default function RoleManager() {
 
   const loadUsers = async () => {
     setLoading(true);
-    const [profilesRes, rolesRes] = await Promise.all([
+    const [authRes, profilesRes, rolesRes] = await Promise.all([
+      supabase.functions.invoke("list-users"),
       supabase.from("profiles").select("id, full_name, phone, created_at"),
       supabase.from("user_roles").select("user_id, role"),
     ]);
 
+    if (authRes.error) {
+      toast.error("Gagal memuat daftar pengguna: " + authRes.error.message);
+      setLoading(false);
+      return;
+    }
+
+    const authUsers: Array<{
+      id: string;
+      email: string | null;
+      email_confirmed_at: string | null;
+      last_sign_in_at: string | null;
+      created_at: string;
+    }> = authRes.data?.users || [];
     const profiles = profilesRes.data || [];
     const roles = rolesRes.data || [];
 
-    const merged: UserWithRole[] = profiles.map((p) => ({
-      id: p.id,
-      full_name: p.full_name,
-      phone: p.phone,
-      created_at: p.created_at,
-      roles: roles.filter((r) => r.user_id === p.id).map((r) => r.role),
-    }));
+    const profileMap = new Map(profiles.map((p) => [p.id, p]));
 
+    const merged: UserWithRole[] = authUsers.map((u) => {
+      const p = profileMap.get(u.id);
+      return {
+        id: u.id,
+        email: u.email,
+        email_confirmed_at: u.email_confirmed_at,
+        last_sign_in_at: u.last_sign_in_at,
+        full_name: p?.full_name ?? null,
+        phone: p?.phone ?? null,
+        created_at: u.created_at,
+        roles: roles.filter((r) => r.user_id === u.id).map((r) => r.role),
+      };
+    });
+
+    merged.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
     setUsers(merged);
     setLoading(false);
   };
@@ -78,6 +104,7 @@ export default function RoleManager() {
     return (
       !q ||
       u.full_name?.toLowerCase().includes(q) ||
+      u.email?.toLowerCase().includes(q) ||
       u.phone?.toLowerCase().includes(q) ||
       u.id.toLowerCase().includes(q)
     );
@@ -97,14 +124,15 @@ export default function RoleManager() {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-display font-semibold text-foreground flex items-center gap-2">
-          <UserCog className="h-5 w-5" /> Kelola Role Pengguna
+          <UserCog className="h-5 w-5" /> Pengguna &amp; Role
         </h3>
+        <span className="text-xs text-muted-foreground">{filtered.length} pengguna</span>
       </div>
 
       <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Cari nama, telepon, atau ID..."
+          placeholder="Cari nama, email, telepon, atau ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="pl-9"
@@ -116,13 +144,34 @@ export default function RoleManager() {
           <div key={u.id} className="rounded-lg bg-card p-4 shadow-card">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {u.full_name || "Tanpa Nama"}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {u.full_name || "Tanpa Nama"}
+                  </p>
+                  {u.email_confirmed_at ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-500">
+                      <CheckCircle2 className="h-3 w-3" /> Terverifikasi
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-yellow-500/15 px-1.5 py-0.5 text-[10px] font-medium text-yellow-500">
+                      <XCircle className="h-3 w-3" /> Belum verifikasi
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                  <Mail className="h-3 w-3 shrink-0" /> {u.email || "—"}
                 </p>
                 <p className="text-xs text-muted-foreground">{u.phone || "—"}</p>
+                <p className="text-[10px] text-muted-foreground/60">
+                  Bergabung: {new Date(u.created_at).toLocaleDateString("id-ID")}
+                  {u.last_sign_in_at && ` · Terakhir login: ${new Date(u.last_sign_in_at).toLocaleDateString("id-ID")}`}
+                </p>
                 <p className="text-[10px] text-muted-foreground/60 font-mono truncate">{u.id}</p>
               </div>
               <div className="flex flex-wrap gap-1">
+                {u.roles.length === 0 && (
+                  <span className="text-[10px] text-muted-foreground italic">Tanpa role</span>
+                )}
                 {u.roles.map((role) => (
                   <span
                     key={role}
