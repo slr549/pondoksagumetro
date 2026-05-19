@@ -38,9 +38,19 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {user ? (
-            <Link to="/dashboard" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-              <User className="h-5 w-5" />
-            </Link>
+            <>
+              <Link to="/dashboard" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground" aria-label="Dashboard">
+                <User className="h-5 w-5" />
+              </Link>
+              <button
+                onClick={signOut}
+                aria-label="Keluar"
+                title="Keluar"
+                className="hidden h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground md:flex"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </>
           ) : (
             <Link to="/login" className="hidden rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground md:block">
               Masuk
