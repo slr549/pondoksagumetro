@@ -63,6 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setIsAdmin(false);
+    toast.success("Berhasil keluar. Sampai jumpa!");
+    window.location.href = "/";
   };
 
   return (
