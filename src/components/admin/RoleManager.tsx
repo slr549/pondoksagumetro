@@ -1,9 +1,17 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Search, UserCog, CheckCircle2, XCircle, Mail } from "lucide-react";
+import { Shield, Search, UserCog, CheckCircle2, XCircle, Mail, Eye, Phone, Calendar, Clock, Package, User as UserIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { formatPrice } from "@/data/products";
 
 interface UserWithRole {
   id: string;
@@ -18,10 +26,48 @@ interface UserWithRole {
 
 const AVAILABLE_ROLES = ["admin", "moderator", "user"] as const;
 
+interface LastOrder {
+  id: string;
+  created_at: string;
+  status: string;
+  total_price: number;
+  payment_status: string | null;
+  order_method: string;
+  items: { product_name: string; quantity: number; price_at_purchase: number }[];
+}
+
 export default function RoleManager() {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [detailUser, setDetailUser] = useState<UserWithRole | null>(null);
+  const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
+  const [loadingOrder, setLoadingOrder] = useState(false);
+
+  const openDetail = async (u: UserWithRole) => {
+    setDetailUser(u);
+    setLastOrder(null);
+    setLoadingOrder(true);
+    const { data } = await supabase
+      .from("orders")
+      .select("id, created_at, status, total_price, payment_status, order_method, order_items(product_name, quantity, price_at_purchase)")
+      .eq("user_id", u.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data) {
+      setLastOrder({
+        id: data.id,
+        created_at: data.created_at,
+        status: data.status,
+        total_price: data.total_price,
+        payment_status: data.payment_status,
+        order_method: data.order_method,
+        items: (data.order_items as any[]) || [],
+      });
+    }
+    setLoadingOrder(false);
+  };
 
   const loadUsers = async () => {
     setLoading(true);
@@ -191,6 +237,14 @@ export default function RoleManager() {
               </div>
             </div>
             <div className="mt-2 flex gap-1.5">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => openDetail(u)}
+              >
+                <Eye className="h-3 w-3" /> Detail
+              </Button>
               {AVAILABLE_ROLES.filter((r) => !u.roles.includes(r)).map((role) => (
                 <Button
                   key={role}
@@ -211,6 +265,151 @@ export default function RoleManager() {
           </p>
         )}
       </div>
+
+      <Dialog open={!!detailUser} onOpenChange={(open) => !open && setDetailUser(null)}>
+        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+          {detailUser && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <UserIcon className="h-5 w-5" />
+                  {detailUser.full_name || "Tanpa Nama"}
+                </DialogTitle>
+                <DialogDescription className="font-mono text-[10px] break-all">
+                  {detailUser.id}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <section>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Autentikasi
+                  </h4>
+                  <div className="space-y-1.5 rounded-lg bg-secondary/50 p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <Mail className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-foreground break-all">{detailUser.email || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {detailUser.email_confirmed_at ? (
+                        <>
+                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                          <span className="text-green-500">
+                            Terverifikasi · {new Date(detailUser.email_confirmed_at).toLocaleString("id-ID")}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-3.5 w-3.5 text-yellow-500 shrink-0" />
+                          <span className="text-yellow-500">Email belum diverifikasi</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground">
+                        Terakhir login:{" "}
+                        <span className="text-foreground">
+                          {detailUser.last_sign_in_at
+                            ? new Date(detailUser.last_sign_in_at).toLocaleString("id-ID")
+                            : "Belum pernah"}
+                        </span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-muted-foreground">
+                        Bergabung:{" "}
+                        <span className="text-foreground">
+                          {new Date(detailUser.created_at).toLocaleString("id-ID")}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Profil
+                  </h4>
+                  <div className="space-y-1.5 rounded-lg bg-secondary/50 p-3 text-sm">
+                    <div className="flex items-center gap-2">
+                      <UserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-foreground">{detailUser.full_name || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-foreground">{detailUser.phone || "—"}</span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {detailUser.roles.length === 0 ? (
+                        <span className="text-[11px] italic text-muted-foreground">Tanpa role</span>
+                      ) : (
+                        detailUser.roles.map((role) => (
+                          <span
+                            key={role}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${roleColors[role] || ""}`}
+                          >
+                            <Shield className="h-3 w-3" /> {role}
+                          </span>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                    <Package className="h-3.5 w-3.5" /> Pesanan Terakhir
+                  </h4>
+                  {loadingOrder ? (
+                    <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
+                      Memuat...
+                    </p>
+                  ) : !lastOrder ? (
+                    <p className="rounded-lg bg-secondary/50 p-3 text-sm text-muted-foreground">
+                      Belum ada pesanan.
+                    </p>
+                  ) : (
+                    <div className="space-y-2 rounded-lg bg-secondary/50 p-3 text-sm">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(lastOrder.created_at).toLocaleString("id-ID")}
+                        </span>
+                        <span className="rounded-md bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          {lastOrder.status.replace(/_/g, " ")}
+                        </span>
+                      </div>
+                      <div className="space-y-0.5">
+                        {lastOrder.items.map((it, idx) => (
+                          <div key={idx} className="flex justify-between text-xs">
+                            <span className="text-muted-foreground truncate pr-2">
+                              {it.product_name} × {it.quantity}
+                            </span>
+                            <span className="tabular-nums text-foreground shrink-0">
+                              {formatPrice(it.price_at_purchase * it.quantity)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between border-t border-border pt-1.5">
+                        <span className="text-xs font-medium text-foreground">Total</span>
+                        <span className="text-sm font-display font-bold text-foreground tabular-nums">
+                          {formatPrice(lastOrder.total_price)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-1 text-[10px] text-muted-foreground">
+                        <span>Metode: {lastOrder.order_method}</span>
+                        {lastOrder.payment_status && <span>Pembayaran: {lastOrder.payment_status}</span>}
+                      </div>
+                    </div>
+                  )}
+                </section>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
