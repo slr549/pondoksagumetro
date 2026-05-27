@@ -66,19 +66,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signingOutRef.current = true;
     const toastId = "auth-signout";
     try {
-      await supabase.auth.signOut();
-      setUser(null);
-      setSession(null);
-      setIsAdmin(false);
-      toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
-      navigate("/", { replace: true });
+      const { error } = await supabase.auth.signOut({ scope: "local" });
+
+      // Treat already-missing sessions as a successful logout instead of an error
+      const benign =
+        !error ||
+        error.name === "AuthSessionMissingError" ||
+        /session.*(missing|not found)/i.test(error.message ?? "");
+
+      if (!benign) throw error;
     } catch (err) {
+      console.error("signOut error:", err);
       toast.error("Gagal keluar. Coba lagi.", { id: toastId });
-    } finally {
-      setTimeout(() => {
-        signingOutRef.current = false;
-      }, 500);
+      signingOutRef.current = false;
+      return;
     }
+
+    // Always clear local state and any stale Supabase tokens, even if the
+    // server call failed silently — prevents the user being stuck "logged in".
+    try {
+      Object.keys(localStorage)
+        .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
+        .forEach((k) => localStorage.removeItem(k));
+    } catch {
+      /* ignore storage errors (private mode, etc.) */
+    }
+
+    setUser(null);
+    setSession(null);
+    setIsAdmin(false);
+    toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
+    navigate("/", { replace: true });
+
+    setTimeout(() => {
+      signingOutRef.current = false;
+    }, 500);
   };
 
   return (
