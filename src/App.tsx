@@ -19,6 +19,7 @@ import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/dashboard" element={<UserDashboard />} />
+              <Route path="/orders/:id" element={<OrderDetailPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
