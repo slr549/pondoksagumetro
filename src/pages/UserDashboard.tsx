@@ -168,7 +168,7 @@ export default function UserDashboard() {
             {orders.length === 0 ? (
               <p className="py-12 text-center text-muted-foreground">Belum ada pesanan.</p>
             ) : orders.map((order) => (
-              <div key={order.id} className="rounded-xl bg-card p-4 shadow-card">
+              <Link key={order.id} to={`/orders/${order.id}`} className="block rounded-xl bg-card p-4 shadow-card transition-colors hover:bg-card/80">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("id-ID")}</span>
                   <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || ""}`}>
@@ -187,7 +187,7 @@ export default function UserDashboard() {
                   <span className="text-sm font-medium text-foreground">Total</span>
                   <span className="font-display font-bold text-foreground tabular-nums">{formatPrice(order.total_price)}</span>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
