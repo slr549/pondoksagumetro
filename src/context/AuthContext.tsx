@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -19,7 +19,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const signingOutRef = useRef(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,8 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    if (signingOutRef.current) return;
-    signingOutRef.current = true;
     const toastId = "auth-signout";
     try {
       const { error } = await supabase.auth.signOut({ scope: "local" });
@@ -74,12 +71,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error.name === "AuthSessionMissingError" ||
         /session.*(missing|not found)/i.test(error.message ?? "");
 
-      if (!benign) throw error;
+      if (!benign) {
+        console.error("signOut error:", error);
+        // Don't block local cleanup — still clear client state below
+      }
     } catch (err) {
-      console.error("signOut error:", err);
-      toast.error("Gagal keluar. Coba lagi.", { id: toastId });
-      signingOutRef.current = false;
-      return;
+      console.error("signOut threw:", err);
     }
 
     // Always clear local state and any stale Supabase tokens, even if the
@@ -97,10 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAdmin(false);
     toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
     navigate("/", { replace: true });
-
-    setTimeout(() => {
-      signingOutRef.current = false;
-    }, 500);
   };
 
   return (
