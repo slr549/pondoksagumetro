@@ -1,7 +1,8 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +19,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const signingOutRef = useRef(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -59,12 +62,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
-    setIsAdmin(false);
-    toast.success("Berhasil keluar. Sampai jumpa!");
-    window.location.href = "/";
+    if (signingOutRef.current) return;
+    signingOutRef.current = true;
+    const toastId = "auth-signout";
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
+      navigate("/", { replace: true });
+    } catch (err) {
+      toast.error("Gagal keluar. Coba lagi.", { id: toastId });
+    } finally {
+      setTimeout(() => {
+        signingOutRef.current = false;
+      }, 500);
+    }
   };
 
   return (
