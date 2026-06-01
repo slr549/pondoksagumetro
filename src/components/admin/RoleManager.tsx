@@ -24,7 +24,7 @@ interface UserWithRole {
   roles: string[];
 }
 
-const AVAILABLE_ROLES = ["admin", "moderator", "user"] as const;
+const AVAILABLE_ROLES = ["developer", "admin", "moderator", "user"] as const;
 
 interface LastOrder {
   id: string;
@@ -157,6 +157,7 @@ export default function RoleManager() {
   });
 
   const roleColors: Record<string, string> = {
+    developer: "bg-purple-500/20 text-purple-500",
     admin: "bg-destructive/20 text-destructive",
     moderator: "bg-primary/20 text-primary",
     user: "bg-secondary text-muted-foreground",
