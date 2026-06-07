@@ -9,6 +9,10 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isAdmin: boolean;
+  isDeveloper: boolean;
+  isModerator: boolean;
+  isStaff: boolean;
+  role: "developer" | "admin" | "moderator" | "user" | null;
   signOut: () => Promise<void>;
 }
 
@@ -18,7 +22,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [roles, setRoles] = useState<string[]>([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -31,12 +35,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const { data } = await supabase
             .from("user_roles")
             .select("role")
-            .eq("user_id", session.user.id)
-            .eq("role", "admin")
-            .maybeSingle();
-          setIsAdmin(!!data);
+            .eq("user_id", session.user.id);
+          setRoles((data || []).map((r: any) => r.role));
         } else {
-          setIsAdmin(false);
+          setRoles([]);
         }
         setLoading(false);
       }
@@ -50,9 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from("user_roles")
           .select("role")
           .eq("user_id", session.user.id)
-          .eq("role", "admin")
-          .maybeSingle()
-          .then(({ data }) => setIsAdmin(!!data));
+          .then(({ data }) => setRoles((data || []).map((r: any) => r.role)));
       }
       setLoading(false);
     });
@@ -91,13 +91,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     setUser(null);
     setSession(null);
-    setIsAdmin(false);
+    setRoles([]);
     toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
     navigate("/", { replace: true });
   };
 
+  const isDeveloper = roles.includes("developer");
+  const isAdmin = isDeveloper || roles.includes("admin");
+  const isModerator = roles.includes("moderator");
+  const isStaff = isDeveloper || isAdmin || isModerator;
+  const role: AuthContextType["role"] = isDeveloper
+    ? "developer"
+    : roles.includes("admin")
+    ? "admin"
+    : isModerator
+    ? "moderator"
+    : user
+    ? "user"
+    : null;
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, isAdmin, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isDeveloper, isModerator, isStaff, role, signOut }}>
       {children}
     </AuthContext.Provider>
   );
