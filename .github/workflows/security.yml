@@ -33,7 +33,6 @@ jobs:
       - name: Audit dependencies (fail on high/critical)
         run: |
           set -o pipefail
-          # bun audit exits non-zero when vulnerabilities at or above --audit-level are found
           bun audit --audit-level=high || {
             echo "::error::High or critical severity vulnerabilities found in dependencies"
             exit 1
@@ -48,6 +47,35 @@ jobs:
 
       - name: Build
         run: bun run build
+
+  semgrep:
+    name: Semgrep SAST
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    container:
+      image: semgrep/semgrep
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep scan
+        run: semgrep scan --config p/default --error
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Generate SARIF report
+        if: always()
+        run: semgrep scan --config p/default --sarif --output=semgrep.sarif
+        env:
+          SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+
+      - name: Upload SARIF to GitHub
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: semgrep.sarif
 
   codeql:
     name: CodeQL Static Analysis
@@ -71,4 +99,3 @@ jobs:
         with:
           category: "/language:javascript-typescript"
           upload: true
-        # Fails the job when alerts of error severity are introduced
