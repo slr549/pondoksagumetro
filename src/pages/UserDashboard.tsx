@@ -12,7 +12,7 @@ type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
 type WishlistRow = Tables<"wishlist"> & { products?: Tables<"products"> | null };
 
 export default function UserDashboard() {
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, signOut, isStaff, role } = useAuth();
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [wishlist, setWishlist] = useState<WishlistRow[]>([]);
@@ -137,9 +137,9 @@ export default function UserDashboard() {
             <p className="text-sm text-muted-foreground">Halo, {profile?.full_name || user.email}</p>
           </div>
           <div className="flex gap-2">
-            {isAdmin && (
+            {isStaff && (
               <Link to="/admin" className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-xs font-medium text-foreground hover:bg-primary hover:text-primary-foreground">
-                <Shield className="h-3 w-3" /> Admin
+                <Shield className="h-3 w-3" /> <span className="capitalize">{role}</span>
               </Link>
             )}
             <button onClick={signOut} className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
