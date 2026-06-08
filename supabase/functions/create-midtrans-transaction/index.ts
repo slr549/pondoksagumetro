@@ -60,7 +60,6 @@ Deno.serve(async (req) => {
     // Use the short order id prefix + timestamp suffix to stay well under the cap.
     const shortId = order.id.replace(/-/g, "").slice(0, 20);
     const paymentOrderId = `OD-${shortId}-${Date.now()}`;
-    console.log("paymentOrderId:", paymentOrderId, "len:", paymentOrderId.length);
 
     const payload = {
       transaction_details: {
