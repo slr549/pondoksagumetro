@@ -56,7 +56,10 @@ Deno.serve(async (req) => {
       .select("product_id, product_name, quantity, price_at_purchase")
       .eq("order_id", orderId);
 
-    const paymentOrderId = `ORDER-${order.id}-${Date.now()}`;
+    // Midtrans limits transaction_details.order_id to 50 characters.
+    // Use the short order id prefix + timestamp suffix to stay well under the cap.
+    const shortId = order.id.replace(/-/g, "").slice(0, 20);
+    const paymentOrderId = `OD-${shortId}-${Date.now()}`;
 
     const payload = {
       transaction_details: {
