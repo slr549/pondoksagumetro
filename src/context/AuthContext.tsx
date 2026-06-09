@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { queryClient } from "@/App";
 
 interface AuthContextType {
   user: User | null;

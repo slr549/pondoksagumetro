@@ -22,7 +22,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+export const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
