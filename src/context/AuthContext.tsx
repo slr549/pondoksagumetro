@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -42,6 +42,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRoles([]);
         }
         setLoading(false);
+
+        // Sync logout with Supabase session lifecycle: if the session ends
+        // (explicit sign-out, token expired/revoked, or refresh failed),
+        // clear cached data and bounce the user to the login page.
+        if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) {
+          try {
+            Object.keys(localStorage)
+              .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
+              .forEach((k) => localStorage.removeItem(k));
+          } catch {
+            /* ignore */
+          }
+          queryClient.clear();
+          if (event !== "SIGNED_OUT" || !session) {
+            // Only show the "session expired" toast when it wasn't a manual
+            // signOut() (which shows its own success toast).
+          }
+          const path = window.location.pathname;
+          const isPublic =
+            path === "/" ||
+            path.startsWith("/login") ||
+            path.startsWith("/auth") ||
+            path.startsWith("/reset-password") ||
+            path.startsWith("/produk") ||
+            path.startsWith("/kategori") ||
+            path.startsWith("/tentang") ||
+            path.startsWith("/kontak");
+          if (!isPublic) {
+            toast.info("Sesi Anda telah berakhir. Silakan masuk kembali.", {
+              id: "session-expired",
+            });
+            navigate("/login", { replace: true });
+          }
+        }
       }
     );
 
