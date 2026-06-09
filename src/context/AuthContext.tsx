@@ -93,6 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     setSession(null);
     setRoles([]);
+    queryClient.clear();
     toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
     navigate("/", { replace: true });
   };
