@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -27,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   // Flag set while the user explicitly clicks "Keluar" so the auth-state
   // listener doesn't also fire its "session expired" redirect/toast.
-  const manualSignOutRef = { current: false } as { current: boolean };
+  const manualSignOutRef = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
