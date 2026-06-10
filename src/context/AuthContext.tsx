@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { toast } from "sonner";
@@ -25,6 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [roles, setRoles] = useState<string[]>([]);
   const navigate = useNavigate();
+  // Flag set while the user explicitly clicks "Keluar" so the auth-state
+  // listener doesn't also fire its "session expired" redirect/toast.
+  const manualSignOutRef = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -44,9 +47,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
 
         // Sync logout with Supabase session lifecycle: if the session ends
-        // (explicit sign-out, token expired/revoked, or refresh failed),
-        // clear cached data and bounce the user to the login page.
-        if (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session)) {
+        // unexpectedly (token expired/revoked, or refresh failed), clear
+        // cached data and bounce the user to the login page.
+        // Skip this branch entirely for *manual* sign-out — signOut() itself
+        // handles cleanup, toast, and navigation.
+        if (
+          !manualSignOutRef.current &&
+          (event === "SIGNED_OUT" || (event === "TOKEN_REFRESHED" && !session))
+        ) {
           try {
             Object.keys(localStorage)
               .filter((k) => k.startsWith("sb-") && k.endsWith("-auth-token"))
@@ -55,10 +63,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             /* ignore */
           }
           queryClient.clear();
-          if (event !== "SIGNED_OUT" || !session) {
-            // Only show the "session expired" toast when it wasn't a manual
-            // signOut() (which shows its own success toast).
-          }
           const path = window.location.pathname;
           const isPublic =
             path === "/" ||
@@ -97,6 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     const toastId = "auth-signout";
+    manualSignOutRef.current = true;
     try {
       const { error } = await supabase.auth.signOut({ scope: "local" });
 
@@ -128,8 +133,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setSession(null);
     setRoles([]);
     queryClient.clear();
+    // Dismiss any stale "session expired" toast that may have raced in.
+    toast.dismiss("session-expired");
     toast.success("Berhasil keluar. Sampai jumpa!", { id: toastId });
     navigate("/", { replace: true });
+    // Reset the flag on the next tick so future token expiries still redirect.
+    setTimeout(() => {
+      manualSignOutRef.current = false;
+    }, 500);
   };
 
   const isDeveloper = roles.includes("developer");
