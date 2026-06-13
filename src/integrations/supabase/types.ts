@@ -307,6 +307,7 @@ export type Database = {
           reviewer_name: string
         }[]
       }
+      get_schema_export: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
