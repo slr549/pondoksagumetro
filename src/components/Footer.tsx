@@ -36,9 +36,9 @@ export default function Footer() {
               <a href="mailto:info@pondoksagumetro.com" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
                 <Mail className="h-4 w-4" /> info@pondoksagumetro.com
               </a>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" /> Situgede, Bogor
-              </div>
+              <a href="https://maps.google.com/?q=Situgede,Bogor,Jawa+Barat" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-colors">
+                <MapPin className="h-4 w-4" /> Situgede, Bogor <ExternalLink className="h-3 w-3 ml-1 opacity-60" />
+              </a>
             </div>
           </div>
         </div>
