@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Shield, Search, UserCog, CheckCircle2, XCircle, Mail, Eye, Phone, Calendar, Clock, Package, User as UserIcon } from "lucide-react";
+import { Shield, Search, UserCog, CheckCircle2, XCircle, Mail, Eye, Phone, Calendar, Clock, Package, User as UserIcon, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,7 +11,18 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatPrice } from "@/data/products";
+import { useAuth } from "@/context/AuthContext";
 
 interface UserWithRole {
   id: string;
@@ -37,12 +48,15 @@ interface LastOrder {
 }
 
 export default function RoleManager() {
+  const { isDeveloper, user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [detailUser, setDetailUser] = useState<UserWithRole | null>(null);
   const [lastOrder, setLastOrder] = useState<LastOrder | null>(null);
   const [loadingOrder, setLoadingOrder] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<UserWithRole | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const openDetail = async (u: UserWithRole) => {
     setDetailUser(u);
@@ -142,6 +156,22 @@ export default function RoleManager() {
       return;
     }
     toast.success("Role berhasil dihapus.");
+    loadUsers();
+  };
+
+  const deleteUser = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    const { data, error } = await supabase.functions.invoke("delete-user", {
+      body: { user_id: deleteTarget.id },
+    });
+    setDeleting(false);
+    if (error || (data as any)?.error) {
+      toast.error("Gagal menghapus pengguna: " + (error?.message || (data as any)?.error));
+      return;
+    }
+    toast.success("Pengguna berhasil dihapus.");
+    setDeleteTarget(null);
     loadUsers();
   };
 
@@ -257,6 +287,17 @@ export default function RoleManager() {
                   + {role}
                 </Button>
               ))}
+              {isDeveloper && currentUser?.id !== u.id && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-7 text-xs ml-auto"
+                  onClick={() => setDeleteTarget(u)}
+                  title="Hapus pengguna permanen"
+                >
+                  <Trash2 className="h-3 w-3" /> Hapus
+                </Button>
+              )}
             </div>
           </div>
         ))}
@@ -411,6 +452,34 @@ export default function RoleManager() {
           )}
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && !deleting && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus pengguna permanen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tindakan ini akan menghapus akun{" "}
+              <span className="font-medium text-foreground">
+                {deleteTarget?.full_name || deleteTarget?.email || deleteTarget?.id}
+              </span>{" "}
+              beserta seluruh role-nya. Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                deleteUser();
+              }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? "Menghapus..." : "Ya, hapus"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
