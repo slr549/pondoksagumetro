@@ -43,6 +43,10 @@ export default function Footer() {
           </div>
         </div>
 
+        <div className="mt-8">
+          <MapEmbed height="240px" />
+        </div>
+
         <div className="mt-8 border-t border-border pt-6 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} Pondok Sagu Metro. All rights reserved.
         </div>
