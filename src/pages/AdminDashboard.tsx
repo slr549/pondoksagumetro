@@ -7,7 +7,7 @@ import type { Tables, Enums } from "@/integrations/supabase/types";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode,
 } from "lucide-react";
 import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
@@ -19,8 +19,9 @@ import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
 import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
+import SchemaExport from "@/components/admin/SchemaExport";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles" | "backup";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles" | "backup" | "schema";
 type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
 type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
 type CategoryRow = Tables<"categories">;
@@ -234,6 +235,7 @@ export default function AdminDashboard() {
     { key: "reports", icon: BarChart3, label: "Laporan", roles: ["developer", "admin"] },
     { key: "roles", icon: Shield, label: "Role", roles: ["developer", "admin"] },
     { key: "backup", icon: Database, label: "Backup", roles: ["developer"] },
+    { key: "schema", icon: FileCode, label: "Skema", roles: ["developer"] },
   ];
   const activeRole = (role === "developer" || role === "admin" || role === "moderator") ? role : "moderator";
   const tabs = allTabs.filter((t) => t.roles.includes(activeRole));
@@ -489,6 +491,10 @@ export default function AdminDashboard() {
 
             {tab === "backup" && canBackup && (
               <DatabaseBackup />
+            )}
+
+            {tab === "schema" && isDeveloper && (
+              <SchemaExport />
             )}
           </div>
         </div>
