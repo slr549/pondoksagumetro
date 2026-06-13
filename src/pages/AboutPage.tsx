@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { MapPin, Clock, Heart } from "lucide-react";
 import SEO from "@/components/SEO";
+import MapEmbed from "@/components/MapEmbed";
 
 export default function AboutPage() {
   return (
