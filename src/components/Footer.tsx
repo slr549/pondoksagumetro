@@ -1,4 +1,5 @@
-import { MessageCircle, Instagram, Mail, MapPin } from "lucide-react";
+import { MessageCircle, Instagram, Mail, MapPin, ExternalLink } from "lucide-react";
+import MapEmbed from "@/components/MapEmbed";
 
 export default function Footer() {
   return (
