@@ -7,7 +7,7 @@ import type { Tables, Enums } from "@/integrations/supabase/types";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode, Activity,
 } from "lucide-react";
 import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
@@ -20,8 +20,9 @@ import CustomerManager from "@/components/admin/CustomerManager";
 import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
 import SchemaExport from "@/components/admin/SchemaExport";
+import TrafficDashboard from "@/components/admin/TrafficDashboard";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles" | "backup" | "schema";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema";
 type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
 type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
 type CategoryRow = Tables<"categories">;
@@ -233,6 +234,7 @@ export default function AdminDashboard() {
     { key: "categories", icon: Tag, label: "Kategori", roles: ["developer", "admin", "moderator"] },
     { key: "customers", icon: Users, label: "Pelanggan", roles: ["developer", "admin", "moderator"] },
     { key: "reports", icon: BarChart3, label: "Laporan", roles: ["developer", "admin"] },
+    { key: "traffic", icon: Activity, label: "Traffic", roles: ["developer", "admin"] },
     { key: "roles", icon: Shield, label: "Role", roles: ["developer", "admin"] },
     { key: "backup", icon: Database, label: "Backup", roles: ["developer"] },
     { key: "schema", icon: FileCode, label: "Skema", roles: ["developer"] },
@@ -483,6 +485,10 @@ export default function AdminDashboard() {
 
             {tab === "reports" && (isDeveloper || isAdmin) && (
               <OrderAnalytics orders={orders} products={products} />
+            )}
+
+            {tab === "traffic" && (isDeveloper || isAdmin) && (
+              <TrafficDashboard />
             )}
 
             {tab === "roles" && canManageRoles && (
