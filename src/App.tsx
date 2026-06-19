@@ -6,6 +6,7 @@ import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import VisitorTracker from "@/components/VisitorTracker";
 import Index from "./pages/Index";
 import MenuPage from "./pages/MenuPage";
 import ProductDetailPage from "./pages/ProductDetailPage";
@@ -34,6 +35,7 @@ const App = () => (
         <AuthProvider>
           <CartProvider>
             <Navbar />
+            <VisitorTracker />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/menu" element={<MenuPage />} />
