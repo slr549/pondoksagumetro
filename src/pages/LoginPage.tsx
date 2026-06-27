@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Eye, EyeOff } from "lucide-react";
@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
+  const location = useLocation();
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) { toast.error("Lengkapi semua field."); return; }
@@ -19,7 +19,8 @@ export default function LoginPage() {
     setLoading(false);
     if (error) { console.error("Login error:", error.message); toast.error("Email atau password salah. Silakan coba lagi."); return; }
     toast.success("Login berhasil!");
-    navigate("/");
+    const from = (location.state as any)?.from || "/";
+    navigate(from);
   };
 
   return (

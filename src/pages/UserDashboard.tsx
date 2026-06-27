@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
-import { Package, Heart, User, LogOut, Shield, Camera, Save, Loader2 } from "lucide-react";
+import { Package, Heart, User, LogOut, Shield, Camera, Save, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 
 export default function UserDashboard() {
@@ -19,6 +19,58 @@ export default function UserDashboard() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [payingOrderId, setPayingOrderId] = useState<string | null>(null);
+
+  const handlePayNow = async (order: any) => {
+    setPayingOrderId(order.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-midtrans-transaction", {
+        body: {
+          order_id: order.id,
+          total_price: order.total_price,
+          customer_name: order.customer_name,
+          customer_phone: order.customer_phone,
+          items: order.order_items?.map((i: any) => ({
+            product_id: i.product_id,
+            price_at_purchase: i.price_at_purchase,
+            quantity: i.quantity,
+            product_name: i.product_name,
+          })) || []
+        }
+      });
+
+      if (error || !data?.token) {
+        throw new Error(error?.message || "Gagal mendapatkan token pembayaran");
+      }
+
+      if (!window.snap) {
+        throw new Error("Midtrans Snap belum termuat. Pastikan koneksi internet stabil dan coba refresh halaman.");
+      }
+
+      window.snap.pay(data.token, {
+        onSuccess: function () {
+          toast.success("Pembayaran berhasil!");
+          supabase.from("orders").select("*, order_items(*)").eq("user_id", user?.id).order("created_at", { ascending: false }).then(({ data }) => setOrders(data || []));
+        },
+        onPending: function () {
+          toast.info("Menunggu penyelesaian pembayaran...");
+        },
+        onError: function (err: any) {
+          toast.error("Pembayaran gagal!");
+          console.error(err);
+        },
+        onClose: function () {
+          toast.info("Anda menutup pop-up pembayaran.");
+        }
+      });
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error(err.message || "Terjadi kesalahan sistem saat mencoba membayar.");
+    } finally {
+      setPayingOrderId(null);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -182,6 +234,18 @@ export default function UserDashboard() {
                   <span className="text-sm font-medium text-foreground">Total</span>
                   <span className="font-display font-bold text-foreground tabular-nums">{formatPrice(order.total_price)}</span>
                 </div>
+                {order.status === "pending" && order.order_method === "online_payment" && (
+                  <div className="mt-3 flex justify-end border-t border-border pt-3">
+                    <button 
+                      onClick={() => handlePayNow(order)}
+                      disabled={payingOrderId === order.id}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      {payingOrderId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+                      Bayar Sekarang
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>

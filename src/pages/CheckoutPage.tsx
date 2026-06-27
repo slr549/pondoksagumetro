@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { MessageCircle, CreditCard, ArrowLeft, Loader2 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
@@ -7,24 +7,52 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
 
+declare global {
+  interface Window {
+    snap: any;
+  }
+}
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [pickupTime, setPickupTime] = useState("");
+  const [giftMessage, setGiftMessage] = useState("");
   const [method, setMethod] = useState<"online" | "whatsapp">("whatsapp");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast.error("Silakan masuk (login) terlebih dahulu untuk melanjutkan checkout.");
+      navigate("/login", { state: { from: "/checkout" } });
+    } else if (user) {
+      supabase
+        .from("profiles")
+        .select("full_name, phone")
+        .eq("id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setName((prev) => prev || data.full_name || "");
+            setPhone((prev) => prev || data.phone || "");
+          }
+        });
+    }
+  }, [user, authLoading, navigate]);
+
   const saveOrderToDB = async (orderMethod: "whatsapp" | "online_payment") => {
+    const finalPickupTime = giftMessage ? `${pickupTime} | Pesan: ${giftMessage}` : pickupTime;
+
     const { data: order, error: orderErr } = await supabase
       .from("orders")
       .insert({
         user_id: user?.id || null,
         customer_name: name,
         customer_phone: phone,
-        pickup_time: pickupTime,
+        pickup_time: finalPickupTime,
         total_price: totalPrice,
         order_method: orderMethod,
       })
@@ -73,7 +101,7 @@ export default function CheckoutPage() {
       .map((i) => `• ${i.product.name} x${i.quantity} — ${formatPrice(i.product.price * i.quantity)}`)
       .join("\n");
     const msg = encodeURIComponent(
-      `🛒 *Pesanan Baru — Pondok Sagu Metro*\n\nNama: ${name}\nTelepon: ${phone}\nWaktu Pickup: ${pickupTime}\n\n*Detail Pesanan:*\n${orderItems}\n\n*Total: ${formatPrice(totalPrice)}*\n\nTerima kasih! 🙏`
+      `🛒 *Pesanan Baru — Pondok Sagu Metro*\n\nNama: ${name}\nTelepon: ${phone}\nWaktu Pickup: ${pickupTime}${giftMessage ? `\nPesan / Hadiah: ${giftMessage}` : ""}\n\n*Detail Pesanan:*\n${orderItems}\n\n*Total: ${formatPrice(totalPrice)}*\n\nTerima kasih! 🙏`
     );
     window.open(`https://wa.me/6281234567890?text=${msg}`, "_blank");
     clearCart();
@@ -88,11 +116,68 @@ export default function CheckoutPage() {
       return;
     }
     setSaving(true);
-    await saveOrderToDB("online_payment");
-    clearCart();
-    toast.success("Pesanan berhasil dibuat!");
-    setSaving(false);
-    navigate("/");
+
+    // Simpan order dan dapatkan ID-nya
+    const orderId = await saveOrderToDB("online_payment");
+    if (!orderId) {
+      toast.error("Gagal membuat pesanan di database.");
+      setSaving(false);
+      return;
+    }
+
+    try {
+      // Panggil Supabase Edge Function untuk mengambil token Snap Midtrans
+      const { data, error } = await supabase.functions.invoke("create-midtrans-transaction", {
+        body: {
+          order_id: orderId,
+          total_price: totalPrice,
+          customer_name: name,
+          customer_phone: phone,
+          items: items.map(i => ({
+            product_id: i.product.id,
+            price_at_purchase: i.product.price,
+            quantity: i.quantity,
+            product_name: i.product.name,
+          }))
+        }
+      });
+
+      if (error || !data?.token) {
+        throw new Error(error?.message || "Gagal mendapatkan token pembayaran");
+      }
+
+      // Tampilkan popup Midtrans — cek dahulu apakah Snap sudah termuat
+      if (!window.snap) {
+        throw new Error("Midtrans Snap belum termuat. Pastikan koneksi internet stabil dan coba refresh halaman.");
+      }
+
+      window.snap.pay(data.token, {
+        onSuccess: function () {
+          toast.success("Pembayaran berhasil!");
+          clearCart();
+          navigate("/");
+        },
+        onPending: function () {
+          toast.info("Menunggu penyelesaian pembayaran...");
+          // Opsional: arahkan ke halaman riwayat pesanan (Misal dashboard)
+          clearCart();
+          navigate("/dashboard");
+        },
+        onError: function (err: any) {
+          toast.error("Pembayaran gagal!");
+          console.error(err);
+          setSaving(false);
+        },
+        onClose: function () {
+          toast.info("Anda menutup pop-up pembayaran.");
+          setSaving(false); // Enable the button again
+        }
+      });
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      toast.error(err.message || "Terjadi kesalahan sistem saat mencoba membayar.");
+      setSaving(false);
+    }
   };
 
   return (
@@ -154,6 +239,16 @@ export default function CheckoutPage() {
               className="mt-1 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
             />
           </div>
+          <div>
+            <label className="text-sm font-medium text-foreground">Pesan / Hadiah (Opsional)</label>
+            <textarea
+              value={giftMessage}
+              onChange={(e) => setGiftMessage(e.target.value)}
+              placeholder="Contoh: Titip ucapan Selamat Ulang Tahun ya..."
+              rows={2}
+              className="mt-1 w-full rounded-lg border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+            />
+          </div>
         </div>
 
         {/* Order method */}
@@ -162,22 +257,20 @@ export default function CheckoutPage() {
           <div className="mt-2 grid grid-cols-2 gap-3">
             <button
               onClick={() => setMethod("whatsapp")}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${
-                method === "whatsapp"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/50"
-              }`}
+              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${method === "whatsapp"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/50"
+                }`}
             >
               <MessageCircle className="h-6 w-6" />
               <span className="font-medium">WhatsApp</span>
             </button>
             <button
               onClick={() => setMethod("online")}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${
-                method === "online"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary/50"
-              }`}
+              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${method === "online"
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border text-muted-foreground hover:border-primary/50"
+                }`}
             >
               <CreditCard className="h-6 w-6" />
               <span className="font-medium">Bayar Online</span>

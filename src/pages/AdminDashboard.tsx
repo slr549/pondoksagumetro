@@ -16,6 +16,7 @@ import OrderManager from "@/components/admin/OrderManager";
 import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
 import RoleManager from "@/components/admin/RoleManager";
+import DatabaseBackup from "@/components/admin/DatabaseBackup";
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles";
 
@@ -371,6 +372,10 @@ export default function AdminDashboard() {
           <div className="flex-1 min-w-0">
             {tab === "overview" && (
               <div>
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-lg font-display font-semibold">Ringkasan Sistem</h2>
+                  <DatabaseBackup />
+                </div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
                     { label: "Total Pesanan", value: stats.totalOrders, icon: ShoppingBag },
