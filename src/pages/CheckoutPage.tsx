@@ -8,12 +8,6 @@ import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
 import { openSnap } from "@/lib/midtrans";
 
-declare global {
-  interface Window {
-    snap: any;
-  }
-}
-
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { user, loading: authLoading } = useAuth();
@@ -117,68 +111,6 @@ export default function CheckoutPage() {
       return;
     }
     setSaving(true);
-<<<<<<< HEAD
-
-    // Simpan order dan dapatkan ID-nya
-    const orderId = await saveOrderToDB("online_payment");
-    if (!orderId) {
-      toast.error("Gagal membuat pesanan di database.");
-      setSaving(false);
-      return;
-    }
-
-    try {
-      // Panggil Supabase Edge Function untuk mengambil token Snap Midtrans
-      const { data, error } = await supabase.functions.invoke("create-midtrans-transaction", {
-        body: {
-          order_id: orderId,
-          total_price: totalPrice,
-          customer_name: name,
-          customer_phone: phone,
-          items: items.map(i => ({
-            product_id: i.product.id,
-            price_at_purchase: i.product.price,
-            quantity: i.quantity,
-            product_name: i.product.name,
-          }))
-        }
-      });
-
-      if (error || !data?.token) {
-        throw new Error(error?.message || "Gagal mendapatkan token pembayaran");
-      }
-
-      // Tampilkan popup Midtrans — cek dahulu apakah Snap sudah termuat
-      if (!window.snap) {
-        throw new Error("Midtrans Snap belum termuat. Pastikan koneksi internet stabil dan coba refresh halaman.");
-      }
-
-      window.snap.pay(data.token, {
-        onSuccess: function () {
-          toast.success("Pembayaran berhasil!");
-          clearCart();
-          navigate("/");
-        },
-        onPending: function () {
-          toast.info("Menunggu penyelesaian pembayaran...");
-          // Opsional: arahkan ke halaman riwayat pesanan (Misal dashboard)
-          clearCart();
-          navigate("/dashboard");
-        },
-        onError: function (err: any) {
-          toast.error("Pembayaran gagal!");
-          console.error(err);
-          setSaving(false);
-        },
-        onClose: function () {
-          toast.info("Anda menutup pop-up pembayaran.");
-          setSaving(false); // Enable the button again
-        }
-      });
-    } catch (err: any) {
-      console.error("Payment error:", err);
-      toast.error(err.message || "Terjadi kesalahan sistem saat mencoba membayar.");
-=======
     try {
       const orderId = await saveOrderToDB("online_payment");
       if (!orderId) {
@@ -212,7 +144,6 @@ export default function CheckoutPage() {
         toast.info("Pembayaran dibatalkan.");
       }
     } finally {
->>>>>>> f0988ccde38d7e33e8ebdfc6433d9813c2f45656
       setSaving(false);
     }
   };

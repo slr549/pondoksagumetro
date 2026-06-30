@@ -19,11 +19,8 @@ import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
 import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
-<<<<<<< HEAD
-=======
 import SchemaExport from "@/components/admin/SchemaExport";
 import TrafficDashboard from "@/components/admin/TrafficDashboard";
->>>>>>> f0988ccde38d7e33e8ebdfc6433d9813c2f45656
 
 type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema";
 type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
