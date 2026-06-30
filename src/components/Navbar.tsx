@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { ShoppingCart, Menu, X, User, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, X, User, LogOut, Shield } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { useState } from "react";
@@ -15,7 +15,7 @@ const navLinks = [
 
 export default function Navbar() {
   const { totalItems } = useCart();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isStaff, role } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -38,9 +38,29 @@ export default function Navbar() {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           {user ? (
-            <Link to="/dashboard" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground">
-              <User className="h-5 w-5" />
-            </Link>
+            <>
+              {isStaff && (
+                <Link
+                  to="/admin"
+                  className="hidden h-10 items-center gap-1.5 rounded-lg bg-primary/10 px-3 text-xs font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground md:flex"
+                  title={`Panel ${role}`}
+                >
+                  <Shield className="h-4 w-4" />
+                  <span className="capitalize">{role}</span>
+                </Link>
+              )}
+              <Link to="/dashboard" className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground" aria-label="Dashboard">
+                <User className="h-5 w-5" />
+              </Link>
+              <button
+                onClick={signOut}
+                aria-label="Keluar"
+                title="Keluar"
+                className="hidden h-10 w-10 items-center justify-center rounded-lg bg-secondary text-foreground transition-colors hover:bg-primary hover:text-primary-foreground md:flex"
+              >
+                <LogOut className="h-5 w-5" />
+              </button>
+            </>
           ) : (
             <Link to="/login" className="hidden rounded-lg bg-secondary px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground md:block">
               Masuk
@@ -83,6 +103,12 @@ export default function Navbar() {
               )}
               {user && (
                 <>
+                  {isStaff && (
+                    <Link to="/admin" onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-medium text-primary hover:bg-secondary">
+                      <Shield className="h-4 w-4" /> Admin Panel ({role})
+                    </Link>
+                  )}
                   <Link to="/dashboard" onClick={() => setMobileOpen(false)}
                     className="rounded-lg px-4 py-3 text-sm font-medium text-muted-foreground hover:bg-secondary">
                     Dashboard

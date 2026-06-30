@@ -1,1 +1,4 @@
 project_id = "jkbeokdwnshpxdikbtzu"
+
+[functions.midtrans-notification]
+verify_jwt = false

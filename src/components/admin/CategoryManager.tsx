@@ -10,6 +10,7 @@ import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 interface CategoryManagerProps {
   categories: { id: string; name: string; slug: string }[];
   onChanged: () => void;
+  readOnly?: boolean;
 }
 
 function slugify(text: string) {
@@ -21,7 +22,7 @@ function slugify(text: string) {
     .trim();
 }
 
-export default function CategoryManager({ categories, onChanged }: CategoryManagerProps) {
+export default function CategoryManager({ categories, onChanged, readOnly = false }: CategoryManagerProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<{ id: string; name: string; slug: string } | null>(null);
   const [name, setName] = useState("");
@@ -88,10 +89,17 @@ export default function CategoryManager({ categories, onChanged }: CategoryManag
     <div>
       <div className="flex justify-between items-center mb-4">
         <h3 className="font-display font-semibold text-foreground">Kelola Kategori</h3>
-        <Button size="sm" onClick={openCreate}>
-          <Plus className="h-4 w-4" /> Tambah Kategori
-        </Button>
+        {!readOnly && (
+          <Button size="sm" onClick={openCreate}>
+            <Plus className="h-4 w-4" /> Tambah Kategori
+          </Button>
+        )}
       </div>
+      {readOnly && (
+        <p className="mb-3 rounded-lg bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+          Mode hanya-baca. Hanya Developer atau Admin yang dapat mengubah kategori.
+        </p>
+      )}
       <div className="space-y-2">
         {categories.map((c) => (
           <div key={c.id} className="flex items-center justify-between rounded-lg bg-card p-3 shadow-card">
@@ -99,10 +107,12 @@ export default function CategoryManager({ categories, onChanged }: CategoryManag
               <p className="text-sm font-medium text-foreground">{c.name}</p>
               <p className="text-xs text-muted-foreground">/{c.slug}</p>
             </div>
-            <div className="flex items-center gap-1">
-              <button onClick={() => openEdit(c)} className="text-muted-foreground hover:text-foreground p-1"><Pencil className="h-4 w-4" /></button>
-              <button onClick={() => deleteCategory(c.id)} className="text-destructive hover:text-destructive/80 p-1"><Trash2 className="h-4 w-4" /></button>
-            </div>
+            {!readOnly && (
+              <div className="flex items-center gap-1">
+                <button onClick={() => openEdit(c)} className="text-muted-foreground hover:text-foreground p-1"><Pencil className="h-4 w-4" /></button>
+                <button onClick={() => deleteCategory(c.id)} className="text-destructive hover:text-destructive/80 p-1"><Trash2 className="h-4 w-4" /></button>
+              </div>
+            )}
           </div>
         ))}
         {categories.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">Belum ada kategori.</p>}

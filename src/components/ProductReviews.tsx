@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 
 interface Review {
   id: string;
-  user_id: string;
   rating: number;
   comment: string | null;
   created_at: string;
-  profile?: { full_name: string | null } | null;
+  reviewer_name: string | null;
+  is_mine: boolean;
 }
 
 export default function ProductReviews({ productId }: { productId: string }) {
@@ -24,11 +24,9 @@ export default function ProductReviews({ productId }: { productId: string }) {
   const [hoverRating, setHoverRating] = useState(0);
 
   const loadReviews = async () => {
-    const { data } = await supabase
-      .from("reviews")
-      .select("*, profile:profiles(full_name)")
-      .eq("product_id", productId)
-      .order("created_at", { ascending: false });
+    const { data } = await supabase.rpc("get_product_reviews", {
+      _product_id: productId,
+    });
     setReviews((data as any[]) || []);
     setLoading(false);
   };
@@ -64,7 +62,7 @@ export default function ProductReviews({ productId }: { productId: string }) {
     setSubmitting(false);
   };
 
-  const userReview = user ? reviews.find((r) => r.user_id === user.id) : null;
+  const userReview = user ? reviews.find((r) => r.is_mine) : null;
 
   const handleDelete = async (id: string) => {
     const { error } = await supabase.from("reviews").delete().eq("id", id);
@@ -146,14 +144,14 @@ export default function ProductReviews({ productId }: { productId: string }) {
                     ))}
                   </div>
                   <span className="text-xs font-medium text-foreground">
-                    {r.profile?.full_name || "Anonim"}
+                    {r.reviewer_name || "Anonim"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] text-muted-foreground">
                     {new Date(r.created_at).toLocaleDateString("id-ID")}
                   </span>
-                  {user && r.user_id === user.id && (
+                  {user && r.is_mine && (
                     <button
                       onClick={() => handleDelete(r.id)}
                       className="text-[10px] text-destructive hover:underline"

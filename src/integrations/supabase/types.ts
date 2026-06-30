@@ -84,11 +84,15 @@ export type Database = {
           customer_phone: string
           id: string
           order_method: Database["public"]["Enums"]["order_method"]
+          paid_at: string | null
+          payment_order_id: string | null
+          payment_status: string | null
+          payment_token: string | null
           pickup_time: string | null
           status: Database["public"]["Enums"]["order_status"]
           total_price: number
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -96,11 +100,15 @@ export type Database = {
           customer_phone: string
           id?: string
           order_method: Database["public"]["Enums"]["order_method"]
+          paid_at?: string | null
+          payment_order_id?: string | null
+          payment_status?: string | null
+          payment_token?: string | null
           pickup_time?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_price: number
           updated_at?: string
-          user_id?: string | null
+          user_id: string
         }
         Update: {
           created_at?: string
@@ -108,10 +116,47 @@ export type Database = {
           customer_phone?: string
           id?: string
           order_method?: Database["public"]["Enums"]["order_method"]
+          paid_at?: string | null
+          payment_order_id?: string | null
+          payment_status?: string | null
+          payment_token?: string | null
           pickup_time?: string | null
           status?: Database["public"]["Enums"]["order_status"]
           total_price?: number
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      page_visits: {
+        Row: {
+          created_at: string
+          device_type: string | null
+          id: string
+          path: string
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          path: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          path?: string
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -283,6 +328,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_product_reviews: {
+        Args: { _product_id: string }
+        Returns: {
+          comment: string
+          created_at: string
+          id: string
+          is_mine: boolean
+          product_id: string
+          rating: number
+          reviewer_name: string
+        }[]
+      }
+      get_schema_export: { Args: never; Returns: Json }
+      get_traffic_stats: { Args: { _days?: number }; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -290,9 +349,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin_or_dev: { Args: { _user_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "developer"
       order_method: "online_payment" | "whatsapp"
       order_status:
         | "pending"
@@ -427,7 +488,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "developer"],
       order_method: ["online_payment", "whatsapp"],
       order_status: [
         "pending",

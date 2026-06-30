@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import SEO from "@/components/SEO";
 
 type SortOption = "newest" | "price_asc" | "price_desc" | "rating" | "popular";
 
@@ -133,6 +134,11 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen pt-24 pb-16">
+      <SEO
+        title="Menu — Pondok Sagu Metro Situgede"
+        description="Jelajahi menu lengkap dessert, makanan, dan minuman segar Pondok Sagu Metro. Pesan online untuk pickup di Situgede."
+        path="/menu"
+      />
       <div className="container mx-auto px-4">
         <span className="text-xs font-semibold uppercase tracking-widest text-primary">Menu</span>
         <h1 className="mt-1 text-section font-display font-bold text-foreground">Semua Menu</h1>

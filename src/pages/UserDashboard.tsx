@@ -5,12 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { Package, Heart, User, LogOut, Shield, Camera, Save, Loader2, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import type { Tables } from "@/integrations/supabase/types";
+
+type ProfileRow = Tables<"profiles">;
+type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
+type WishlistRow = Tables<"wishlist"> & { products?: Tables<"products"> | null };
 
 export default function UserDashboard() {
-  const { user, signOut, isAdmin } = useAuth();
-  const [profile, setProfile] = useState<any>(null);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [wishlist, setWishlist] = useState<any[]>([]);
+  const { user, signOut, isStaff, role } = useAuth();
+  const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistRow[]>([]);
   const [activeTab, setActiveTab] = useState<"orders" | "wishlist" | "profile">("orders");
 
   // Profile edit state
@@ -121,7 +126,7 @@ export default function UserDashboard() {
     if (updateError) {
       toast.error("Gagal menyimpan foto profil");
     } else {
-      setProfile((prev: any) => ({ ...prev, avatar_url }));
+      setProfile((prev) => (prev ? { ...prev, avatar_url } : prev));
       toast.success("Foto profil diperbarui");
     }
     setUploadingAvatar(false);
@@ -150,7 +155,7 @@ export default function UserDashboard() {
     if (error) {
       toast.error("Gagal menyimpan profil");
     } else {
-      setProfile((prev: any) => ({ ...prev, full_name: trimmedName, phone: trimmedPhone }));
+      setProfile((prev) => (prev ? { ...prev, full_name: trimmedName, phone: trimmedPhone } : prev));
       toast.success("Profil diperbarui");
     }
     setSaving(false);
@@ -184,9 +189,9 @@ export default function UserDashboard() {
             <p className="text-sm text-muted-foreground">Halo, {profile?.full_name || user.email}</p>
           </div>
           <div className="flex gap-2">
-            {isAdmin && (
+            {isStaff && (
               <Link to="/admin" className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-xs font-medium text-foreground hover:bg-primary hover:text-primary-foreground">
-                <Shield className="h-3 w-3" /> Admin
+                <Shield className="h-3 w-3" /> <span className="capitalize">{role}</span>
               </Link>
             )}
             <button onClick={signOut} className="flex items-center gap-1 rounded-lg bg-secondary px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground">
@@ -215,7 +220,7 @@ export default function UserDashboard() {
             {orders.length === 0 ? (
               <p className="py-12 text-center text-muted-foreground">Belum ada pesanan.</p>
             ) : orders.map((order) => (
-              <div key={order.id} className="rounded-xl bg-card p-4 shadow-card">
+              <Link key={order.id} to={`/orders/${order.id}`} className="block rounded-xl bg-card p-4 shadow-card transition-colors hover:bg-card/80">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{new Date(order.created_at).toLocaleDateString("id-ID")}</span>
                   <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${statusColors[order.status] || ""}`}>
@@ -223,7 +228,7 @@ export default function UserDashboard() {
                   </span>
                 </div>
                 <div className="mt-2 space-y-1">
-                  {order.order_items?.map((item: any) => (
+                  {order.order_items?.map((item) => (
                     <div key={item.id} className="flex justify-between text-sm">
                       <span className="text-muted-foreground">{item.product_name} x{item.quantity}</span>
                       <span className="tabular-nums text-foreground">{formatPrice(item.price_at_purchase * item.quantity)}</span>
@@ -234,6 +239,7 @@ export default function UserDashboard() {
                   <span className="text-sm font-medium text-foreground">Total</span>
                   <span className="font-display font-bold text-foreground tabular-nums">{formatPrice(order.total_price)}</span>
                 </div>
+<<<<<<< HEAD
                 {order.status === "pending" && order.order_method === "online_payment" && (
                   <div className="mt-3 flex justify-end border-t border-border pt-3">
                     <button 
@@ -247,6 +253,9 @@ export default function UserDashboard() {
                   </div>
                 )}
               </div>
+=======
+              </Link>
+>>>>>>> f0988ccde38d7e33e8ebdfc6433d9813c2f45656
             ))}
           </div>
         )}
@@ -256,7 +265,7 @@ export default function UserDashboard() {
           <div className="mt-6 space-y-3">
             {wishlist.length === 0 ? (
               <p className="py-12 text-center text-muted-foreground">Wishlist kosong.</p>
-            ) : wishlist.map((item: any) => (
+            ) : wishlist.map((item) => (
               <div key={item.id} className="flex items-center gap-4 rounded-xl bg-card p-4 shadow-card">
                 {item.products?.image_url && (
                   <img src={item.products.image_url} alt={item.products.name} className="h-16 w-16 rounded-lg object-cover" />

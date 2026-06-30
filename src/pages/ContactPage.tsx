@@ -1,9 +1,15 @@
 import { motion } from "framer-motion";
 import { MessageCircle, Instagram, Mail, MapPin, Phone } from "lucide-react";
+import SEO from "@/components/SEO";
 
 export default function ContactPage() {
   return (
     <div className="min-h-screen pt-24 pb-16">
+      <SEO
+        title="Kontak Pondok Sagu Metro — Situgede, Bogor"
+        description="Hubungi Pondok Sagu Metro via WhatsApp, Instagram, atau email. Lokasi: Situgede, Bogor."
+        path="/contact"
+      />
       <div className="container mx-auto max-w-3xl px-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">Kontak</span>

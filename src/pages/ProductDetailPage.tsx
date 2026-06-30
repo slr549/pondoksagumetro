@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 import ProductReviews from "@/components/ProductReviews";
+import SEO from "@/components/SEO";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -43,6 +44,27 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen pt-20 pb-16">
+      <SEO
+        title={`${product.name} — Pondok Sagu Metro`}
+        description={(product.description || `Pesan ${product.name} di Pondok Sagu Metro Situgede.`).slice(0, 155)}
+        path={`/product/${product.id}`}
+        jsonLd={{
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: product.name,
+          image: product.image_url || undefined,
+          description: product.description || undefined,
+          offers: {
+            "@type": "Offer",
+            price: product.price,
+            priceCurrency: "IDR",
+            availability:
+              (product.stock_quantity ?? 0) > 0
+                ? "https://schema.org/InStock"
+                : "https://schema.org/OutOfStock",
+          },
+        }}
+      />
       <div className="container mx-auto px-4">
         <Link to="/menu" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-6">
           <ArrowLeft className="h-4 w-4" /> Kembali ke Menu

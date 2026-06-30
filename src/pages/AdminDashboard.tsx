@@ -3,9 +3,11 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
+import type { Tables, Enums } from "@/integrations/supabase/types";
+import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode, Activity,
 } from "lucide-react";
 import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
@@ -17,21 +19,32 @@ import OrderAnalytics from "@/components/admin/OrderAnalytics";
 import CustomerManager from "@/components/admin/CustomerManager";
 import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
+<<<<<<< HEAD
+=======
+import SchemaExport from "@/components/admin/SchemaExport";
+import TrafficDashboard from "@/components/admin/TrafficDashboard";
+>>>>>>> f0988ccde38d7e33e8ebdfc6433d9813c2f45656
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "roles";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema";
+type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
+type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
+type CategoryRow = Tables<"categories">;
 
 export default function AdminDashboard() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isStaff, isDeveloper, isAdmin, isModerator, role, loading } = useAuth();
   const navigate = useNavigate();
   const [tab, setTab] = useState<AdminTab>("overview");
-  const [products, setProducts] = useState<any[]>([]);
-  const [orders, setOrders] = useState<any[]>([]);
-  const [categories, setCategories] = useState<any[]>([]);
+  const [products, setProducts] = useState<ProductRow[]>([]);
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [stats, setStats] = useState({ totalOrders: 0, totalRevenue: 0, totalProducts: 0, totalCustomers: 0 });
   const [productDialogOpen, setProductDialogOpen] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<any | null>(null);
+  const [editingProduct, setEditingProduct] = useState<ProductRow | null>(null);
 
   const [adminVerified, setAdminVerified] = useState(false);
+  const canWriteCatalog = isDeveloper || (isAdmin && !isModerator) || isAdmin; // dev or admin
+  const canManageRoles = isDeveloper || isAdmin;
+  const canBackup = isDeveloper || isAdmin;
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [volume, setVolume] = useState(() => {
     const saved = localStorage.getItem("admin-notif-volume");
@@ -134,12 +147,12 @@ export default function AdminDashboard() {
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
-      .maybeSingle()
       .then(({ data }) => {
-        if (!data) {
+        const userRoles = (data || []).map((r: any) => r.role);
+        const staff = userRoles.some((r) => ["developer", "admin", "moderator"].includes(r));
+        if (!staff) {
           navigate("/");
-          toast.error("Akses ditolak. Anda bukan admin.");
+          toast.error("Akses ditolak.");
         } else {
           setAdminVerified(true);
         }
@@ -156,7 +169,7 @@ export default function AdminDashboard() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'orders' },
         (payload) => {
-          const newOrder = payload.new as any;
+          const newOrder = payload.new as OrderRow;
           if (soundEnabledRef.current) {
             playNotificationSound(selectedSoundRef.current, volume);
           }
@@ -177,7 +190,7 @@ export default function AdminDashboard() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [adminVerified]);
+  }, [adminVerified, volume]);
 
   const loadData = async () => {
     const [prodRes, ordRes, catRes] = await Promise.all([
@@ -189,17 +202,17 @@ export default function AdminDashboard() {
     setOrders(ordRes.data || []);
     setCategories(catRes.data || []);
 
-    const allOrders = ordRes.data || [];
+    const allOrders = (ordRes.data || []) as OrderRow[];
     setStats({
       totalOrders: allOrders.length,
-      totalRevenue: allOrders.filter((o: any) => o.status !== "cancelled").reduce((s: number, o: any) => s + o.total_price, 0),
+      totalRevenue: allOrders.filter((o) => o.status !== "cancelled").reduce((s, o) => s + o.total_price, 0),
       totalProducts: (prodRes.data || []).length,
-      totalCustomers: new Set(allOrders.map((o: any) => o.user_id).filter(Boolean)).size,
+      totalCustomers: new Set(allOrders.map((o) => o.user_id).filter(Boolean)).size,
     });
   };
 
   const updateOrderStatus = async (orderId: string, status: string) => {
-    const { error } = await supabase.from("orders").update({ status: status as any }).eq("id", orderId);
+    const { error } = await supabase.from("orders").update({ status: status as Enums<"order_status"> }).eq("id", orderId);
     if (error) { toast.error("Gagal update status."); return; }
     toast.success("Status pesanan diperbarui.");
     loadData();
@@ -215,17 +228,27 @@ export default function AdminDashboard() {
   if (loading) return <div className="flex min-h-screen items-center justify-center pt-16"><p className="text-muted-foreground">Loading...</p></div>;
   if (!adminVerified) return null;
 
-  const pendingCount = orders.filter((o: any) => o.status === "pending").length;
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
 
-  const tabs: { key: AdminTab; icon: any; label: string; badge?: number }[] = [
-    { key: "overview", icon: LayoutDashboard, label: "Overview" },
-    { key: "products", icon: Package, label: "Produk" },
-    { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount },
-    { key: "categories", icon: Tag, label: "Kategori" },
-    { key: "customers", icon: Users, label: "Pelanggan" },
-    { key: "reports", icon: BarChart3, label: "Laporan" },
-    { key: "roles", icon: Shield, label: "Role" },
+  const allTabs: { key: AdminTab; icon: LucideIcon; label: string; badge?: number; roles: Array<"developer" | "admin" | "moderator"> }[] = [
+    { key: "overview", icon: LayoutDashboard, label: "Overview", roles: ["developer", "admin", "moderator"] },
+    { key: "products", icon: Package, label: "Produk", roles: ["developer", "admin", "moderator"] },
+    { key: "orders", icon: ShoppingBag, label: "Pesanan", badge: pendingCount, roles: ["developer", "admin", "moderator"] },
+    { key: "categories", icon: Tag, label: "Kategori", roles: ["developer", "admin", "moderator"] },
+    { key: "customers", icon: Users, label: "Pelanggan", roles: ["developer", "admin", "moderator"] },
+    { key: "reports", icon: BarChart3, label: "Laporan", roles: ["developer", "admin"] },
+    { key: "traffic", icon: Activity, label: "Traffic", roles: ["developer", "admin"] },
+    { key: "roles", icon: Shield, label: "Role", roles: ["developer", "admin"] },
+    { key: "backup", icon: Database, label: "Backup", roles: ["developer"] },
+    { key: "schema", icon: FileCode, label: "Skema", roles: ["developer"] },
   ];
+  const activeRole = (role === "developer" || role === "admin" || role === "moderator") ? role : "moderator";
+  const tabs = allTabs.filter((t) => t.roles.includes(activeRole));
+  // Redirect away if current tab is not allowed
+  if (!tabs.find((t) => t.key === tab)) {
+    // fallback to overview without state mutation during render: defer
+    setTimeout(() => setTab("overview"), 0);
+  }
 
   const statusColors: Record<string, string> = {
     pending: "bg-yellow-500/20 text-yellow-400",
@@ -415,10 +438,17 @@ export default function AdminDashboard() {
               <div>
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-display font-semibold text-foreground">Kelola Produk</h3>
-                  <Button size="sm" onClick={() => { setEditingProduct(null); setProductDialogOpen(true); }}>
-                    <Plus className="h-4 w-4" /> Tambah Produk
-                  </Button>
+                  {canWriteCatalog && (
+                    <Button size="sm" onClick={() => { setEditingProduct(null); setProductDialogOpen(true); }}>
+                      <Plus className="h-4 w-4" /> Tambah Produk
+                    </Button>
+                  )}
                 </div>
+                {!canWriteCatalog && (
+                  <p className="mb-3 rounded-lg bg-secondary/50 px-3 py-2 text-xs text-muted-foreground">
+                    Mode hanya-baca. Hanya Developer atau Admin yang dapat mengubah produk.
+                  </p>
+                )}
                 <div className="space-y-2">
                   {products.map((p) => (
                     <div key={p.id} className="flex items-center gap-3 rounded-lg bg-card p-3 shadow-card">
@@ -428,8 +458,12 @@ export default function AdminDashboard() {
                         <p className="text-xs text-muted-foreground">{p.categories?.name} · Stok: {p.stock_quantity}</p>
                       </div>
                       <p className="text-sm font-bold text-foreground tabular-nums">{formatPrice(p.price)}</p>
-                      <button onClick={() => { setEditingProduct(p); setProductDialogOpen(true); }} className="text-muted-foreground hover:text-foreground"><Pencil className="h-4 w-4" /></button>
-                      <button onClick={() => deleteProduct(p.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+                      {canWriteCatalog && (
+                        <>
+                          <button onClick={() => { setEditingProduct(p); setProductDialogOpen(true); }} className="text-muted-foreground hover:text-foreground"><Pencil className="h-4 w-4" /></button>
+                          <button onClick={() => deleteProduct(p.id)} className="text-destructive hover:text-destructive/80"><Trash2 className="h-4 w-4" /></button>
+                        </>
+                      )}
                     </div>
                   ))}
                   {products.length === 0 && <p className="text-sm text-muted-foreground py-8 text-center">Belum ada produk di database.</p>}
@@ -449,19 +483,31 @@ export default function AdminDashboard() {
             )}
 
             {tab === "categories" && (
-              <CategoryManager categories={categories} onChanged={loadData} />
+              <CategoryManager categories={categories} onChanged={loadData} readOnly={!canWriteCatalog} />
             )}
 
             {tab === "customers" && (
               <CustomerManager orders={orders} />
             )}
 
-            {tab === "reports" && (
+            {tab === "reports" && (isDeveloper || isAdmin) && (
               <OrderAnalytics orders={orders} products={products} />
             )}
 
-            {tab === "roles" && (
+            {tab === "traffic" && (isDeveloper || isAdmin) && (
+              <TrafficDashboard />
+            )}
+
+            {tab === "roles" && canManageRoles && (
               <RoleManager />
+            )}
+
+            {tab === "backup" && canBackup && (
+              <DatabaseBackup />
+            )}
+
+            {tab === "schema" && isDeveloper && (
+              <SchemaExport />
             )}
           </div>
         </div>

@@ -1,9 +1,16 @@
 import { motion } from "framer-motion";
 import { MapPin, Clock, Heart } from "lucide-react";
+import SEO from "@/components/SEO";
+import MapEmbed from "@/components/MapEmbed";
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen pt-24 pb-16">
+      <SEO
+        title="Tentang Pondok Sagu Metro — Kuliner Situgede"
+        description="Pondok Sagu Metro adalah usaha kuliner lokal di Situgede, Bogor. Dessert, makanan, dan minuman segar dengan resep turun-temurun."
+        path="/about"
+      />
       <div className="container mx-auto max-w-3xl px-4">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <span className="text-xs font-semibold uppercase tracking-widest text-primary">Tentang Kami</span>
@@ -35,6 +42,15 @@ export default function AboutPage() {
             </motion.div>
           ))}
         </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-12"
+        >
+          <h2 className="font-display text-lg font-bold text-foreground mb-4">Lokasi Kami</h2>
+          <MapEmbed height="360px" />
+        </motion.div>
       </div>
     </div>
   );
