@@ -1,6 +1,7 @@
 import { render, screen, renderHook, act } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { CartProvider, useCart } from "@/context/CartContext";
+import { Product } from "@/data/products";
 import { AuthProvider } from "@/context/AuthContext";
 import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -31,7 +32,7 @@ vi.mock("@/integrations/supabase/client", () => {
   };
 });
 
-const mockProduct = {
+const mockProduct: Product = {
   id: "prod-1",
   name: "Sagu Keju",
   price: 25000,
@@ -40,7 +41,12 @@ const mockProduct = {
   is_best_seller: false,
   is_in_stock: true,
   category_id: "cat-1",
-  categories: { name: "Dessert", slug: "dessert" }
+  categories: { name: "Dessert", slug: "dessert" },
+  avg_rating: 4.5,
+  review_count: 10,
+  stock_quantity: 50,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString()
 };
 
 describe("Shopping Cart and Checkout Integration Flows", () => {
