@@ -276,6 +276,51 @@ export type Database = {
           },
         ]
       }
+      security_events: {
+        Row: {
+          actor_email: string | null
+          actor_id: string | null
+          created_at: string
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json
+          resource: string | null
+          severity: string
+          target_email: string | null
+          target_user_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string | null
+          severity?: string
+          target_email?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_id?: string | null
+          created_at?: string
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json
+          resource?: string | null
+          severity?: string
+          target_email?: string | null
+          target_user_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -341,6 +386,7 @@ export type Database = {
         }[]
       }
       get_schema_export: { Args: never; Returns: Json }
+      get_security_overview: { Args: never; Returns: Json }
       get_traffic_stats: { Args: { _days?: number }; Returns: Json }
       has_role: {
         Args: {
@@ -351,6 +397,16 @@ export type Database = {
       }
       is_admin_or_dev: { Args: { _user_id: string }; Returns: boolean }
       is_staff: { Args: { _user_id: string }; Returns: boolean }
+      log_security_event: {
+        Args: {
+          _event_type: string
+          _metadata?: Json
+          _resource?: string
+          _severity?: string
+          _target_user_id?: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "moderator" | "user" | "developer"

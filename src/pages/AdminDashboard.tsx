@@ -21,8 +21,9 @@ import RoleManager from "@/components/admin/RoleManager";
 import DatabaseBackup from "@/components/admin/DatabaseBackup";
 import SchemaExport from "@/components/admin/SchemaExport";
 import TrafficDashboard from "@/components/admin/TrafficDashboard";
+import SecurityCenter from "@/components/admin/SecurityCenter";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema" | "security";
 type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
 type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
 type CategoryRow = Tables<"categories">;
@@ -238,6 +239,7 @@ export default function AdminDashboard() {
     { key: "roles", icon: Shield, label: "Role", roles: ["developer", "admin"] },
     { key: "backup", icon: Database, label: "Backup", roles: ["developer"] },
     { key: "schema", icon: FileCode, label: "Skema", roles: ["developer"] },
+    { key: "security", icon: Shield, label: "Security", roles: ["developer"] },
   ];
   const activeRole = (role === "developer" || role === "admin" || role === "moderator") ? role : "moderator";
   const tabs = allTabs.filter((t) => t.roles.includes(activeRole));
@@ -505,6 +507,10 @@ export default function AdminDashboard() {
 
             {tab === "schema" && isDeveloper && (
               <SchemaExport />
+            )}
+
+            {tab === "security" && isDeveloper && (
+              <SecurityCenter />
             )}
           </div>
         </div>
