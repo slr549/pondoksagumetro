@@ -39,7 +39,6 @@ const mockProduct: Product = {
   image_url: "",
   description: "Enak",
   is_best_seller: false,
-  is_in_stock: true,
   category_id: "cat-1",
   categories: { name: "Dessert", slug: "dessert" },
   avg_rating: 4.5,
