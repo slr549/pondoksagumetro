@@ -75,8 +75,8 @@ export default function CheckoutPage() {
         customer_phone: phone,
         pickup_time: finalPickupTime,
         total_price: totalPrice,
-        order_method: orderMethod,
-      })
+        order_method: orderMethod as any,
+      } as any)
       .select("id")
       .single();
 
