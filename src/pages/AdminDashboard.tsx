@@ -7,7 +7,7 @@ import type { Tables, Enums } from "@/integrations/supabase/types";
 import type { LucideIcon } from "lucide-react";
 import {
   LayoutDashboard, Package, ShoppingBag, Tag, Users, BarChart3,
-  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode, Activity,
+  Plus, Pencil, Trash2, ChevronDown, ArrowLeft, Volume2, VolumeX, Volume1, Music, Upload, X, Shield, Database, FileCode, Activity, CreditCard,
 } from "lucide-react";
 import { SOUND_OPTIONS, setSoundOptions, playNotificationSound, type SoundOption } from "@/lib/notificationSounds";
 import { toast } from "sonner";
@@ -22,8 +22,9 @@ import DatabaseBackup from "@/components/admin/DatabaseBackup";
 import SchemaExport from "@/components/admin/SchemaExport";
 import TrafficDashboard from "@/components/admin/TrafficDashboard";
 import SecurityCenter from "@/components/admin/SecurityCenter";
+import PaymentSettings from "@/components/admin/PaymentSettings";
 
-type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema" | "security";
+type AdminTab = "overview" | "products" | "orders" | "categories" | "customers" | "reports" | "traffic" | "roles" | "backup" | "schema" | "security" | "payments";
 type ProductRow = Tables<"products"> & { categories?: { name: string } | null };
 type OrderRow = Tables<"orders"> & { order_items?: Tables<"order_items">[] };
 type CategoryRow = Tables<"categories">;
@@ -237,6 +238,7 @@ export default function AdminDashboard() {
     { key: "reports", icon: BarChart3, label: "Laporan", roles: ["developer", "admin"] },
     { key: "traffic", icon: Activity, label: "Traffic", roles: ["developer", "admin"] },
     { key: "roles", icon: Shield, label: "Role", roles: ["developer", "admin"] },
+    { key: "payments", icon: CreditCard, label: "Pembayaran", roles: ["developer", "admin"] },
     { key: "backup", icon: Database, label: "Backup", roles: ["developer"] },
     { key: "schema", icon: FileCode, label: "Skema", roles: ["developer"] },
     { key: "security", icon: Shield, label: "Security", roles: ["developer"] },
@@ -511,6 +513,10 @@ export default function AdminDashboard() {
 
             {tab === "security" && isDeveloper && (
               <SecurityCenter />
+            )}
+
+            {tab === "payments" && (isDeveloper || isAdmin) && (
+              <PaymentSettings />
             )}
           </div>
         </div>

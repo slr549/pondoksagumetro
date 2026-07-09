@@ -161,6 +161,48 @@ export type Database = {
         }
         Relationships: []
       }
+      payment_settings: {
+        Row: {
+          bank_account_holder: string
+          bank_account_number: string
+          bank_name: string
+          cod_enabled: boolean
+          cod_note: string
+          created_at: string
+          id: string
+          midtrans_active: boolean
+          qris_image_url: string | null
+          transfer_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          bank_account_holder?: string
+          bank_account_number?: string
+          bank_name?: string
+          cod_enabled?: boolean
+          cod_note?: string
+          created_at?: string
+          id?: string
+          midtrans_active?: boolean
+          qris_image_url?: string | null
+          transfer_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          bank_account_holder?: string
+          bank_account_number?: string
+          bank_name?: string
+          cod_enabled?: boolean
+          cod_note?: string
+          created_at?: string
+          id?: string
+          midtrans_active?: boolean
+          qris_image_url?: string | null
+          transfer_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           avg_rating: number | null
