@@ -1,12 +1,25 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { MessageCircle, CreditCard, ArrowLeft, Loader2 } from "lucide-react";
+import { MessageCircle, CreditCard, ArrowLeft, Loader2, Landmark, Wallet, Copy } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { formatPrice } from "@/data/products";
 import { toast } from "sonner";
 import { openSnap } from "@/lib/midtrans";
+
+interface PaymentConfig {
+  midtrans_active: boolean;
+  transfer_enabled: boolean;
+  bank_name: string;
+  bank_account_number: string;
+  bank_account_holder: string;
+  qris_image_url: string | null;
+  cod_enabled: boolean;
+  cod_note: string;
+}
+
+type PaymentMethod = "whatsapp" | "transfer" | "cod" | "online";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
@@ -16,8 +29,21 @@ export default function CheckoutPage() {
   const [phone, setPhone] = useState("");
   const [pickupTime, setPickupTime] = useState("");
   const [giftMessage, setGiftMessage] = useState("");
-  const [method, setMethod] = useState<"online" | "whatsapp">("whatsapp");
+  const [method, setMethod] = useState<PaymentMethod>("whatsapp");
   const [saving, setSaving] = useState(false);
+  const [config, setConfig] = useState<PaymentConfig | null>(null);
+
+  useEffect(() => {
+    (supabase as any)
+      .from("payment_settings")
+      .select("midtrans_active, transfer_enabled, bank_name, bank_account_number, bank_account_holder, qris_image_url, cod_enabled, cod_note")
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }: { data: PaymentConfig | null }) => {
+        if (data) setConfig(data);
+      });
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -38,7 +64,7 @@ export default function CheckoutPage() {
     }
   }, [user, authLoading, navigate]);
 
-  const saveOrderToDB = async (orderMethod: "whatsapp" | "online_payment") => {
+  const saveOrderToDB = async (orderMethod: string) => {
     const finalPickupTime = giftMessage ? `${pickupTime} | Pesan: ${giftMessage}` : pickupTime;
 
     const { data: order, error: orderErr } = await supabase
@@ -105,6 +131,43 @@ export default function CheckoutPage() {
     navigate("/");
   };
 
+  const buildWaMessage = (label: string, extra?: string) => {
+    const orderItems = items
+      .map((i) => `• ${i.product.name} x${i.quantity} — ${formatPrice(i.product.price * i.quantity)}`)
+      .join("\n");
+    return encodeURIComponent(
+      `🛒 *Pesanan ${label} — Pondok Sagu Metro*\n\nNama: ${name}\nTelepon: ${phone}\nWaktu Pickup: ${pickupTime}${giftMessage ? `\nPesan / Hadiah: ${giftMessage}` : ""}\n\n*Detail Pesanan:*\n${orderItems}\n\n*Total: ${formatPrice(totalPrice)}*${extra ? `\n\n${extra}` : ""}\n\nTerima kasih! 🙏`
+    );
+  };
+
+  const handleTransfer = async () => {
+    if (!name || !phone || !pickupTime) { toast.error("Lengkapi semua informasi terlebih dahulu."); return; }
+    setSaving(true);
+    await saveOrderToDB("bank_transfer");
+    const extra = `Metode: Transfer Bank\nBank: ${config?.bank_name}\nNo. Rek: ${config?.bank_account_number}\na.n.: ${config?.bank_account_holder}\n\nMohon kirim bukti transfer di chat ini.`;
+    window.open(`https://wa.me/6281234567890?text=${buildWaMessage("Transfer Bank", extra)}`, "_blank");
+    clearCart();
+    toast.success("Pesanan dibuat. Silakan lakukan transfer.");
+    setSaving(false);
+    navigate("/");
+  };
+
+  const handleCOD = async () => {
+    if (!name || !phone || !pickupTime) { toast.error("Lengkapi semua informasi terlebih dahulu."); return; }
+    setSaving(true);
+    await saveOrderToDB("cod");
+    const extra = `Metode: Bayar di Tempat (COD)\n${config?.cod_note ?? ""}`;
+    window.open(`https://wa.me/6281234567890?text=${buildWaMessage("COD", extra)}`, "_blank");
+    clearCart();
+    toast.success("Pesanan dibuat. Bayar saat pickup.");
+    setSaving(false);
+    navigate("/");
+  };
+
+  const copyText = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => toast.success("Disalin!"));
+  };
+
   const handleOnline = async () => {
     if (!name || !phone || !pickupTime) {
       toast.error("Lengkapi semua informasi terlebih dahulu.");
@@ -146,6 +209,17 @@ export default function CheckoutPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const midtransActive = config?.midtrans_active ?? false;
+  const transferEnabled = config?.transfer_enabled ?? false;
+  const codEnabled = config?.cod_enabled ?? false;
+
+  const submit = () => {
+    if (method === "whatsapp") return handleWhatsApp();
+    if (method === "transfer") return handleTransfer();
+    if (method === "cod") return handleCOD();
+    if (method === "online") return handleOnline();
   };
 
   return (
@@ -233,21 +307,87 @@ export default function CheckoutPage() {
               <MessageCircle className="h-6 w-6" />
               <span className="font-medium">WhatsApp</span>
             </button>
+            {transferEnabled && (
+              <button
+                onClick={() => setMethod("transfer")}
+                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${method === "transfer"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+              >
+                <Landmark className="h-6 w-6" />
+                <span className="font-medium">Transfer Bank</span>
+              </button>
+            )}
+            {codEnabled && (
+              <button
+                onClick={() => setMethod("cod")}
+                className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${method === "cod"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+              >
+                <Wallet className="h-6 w-6" />
+                <span className="font-medium">Bayar di Tempat</span>
+              </button>
+            )}
             <button
-              onClick={() => setMethod("online")}
-              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${method === "online"
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:border-primary/50"
+              onClick={() => midtransActive && setMethod("online")}
+              disabled={!midtransActive}
+              title={midtransActive ? "Bayar via Midtrans" : "Midtrans sementara tidak tersedia"}
+              className={`flex flex-col items-center gap-2 rounded-xl border p-4 text-sm transition-colors ${
+                !midtransActive
+                  ? "cursor-not-allowed border-dashed border-border/60 bg-secondary/30 text-muted-foreground/60"
+                  : method === "online"
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:border-primary/50"
                 }`}
             >
               <CreditCard className="h-6 w-6" />
-              <span className="font-medium">Bayar Online</span>
+              <span className="font-medium">Midtrans</span>
+              {!midtransActive && <span className="text-[10px]">Tidak tersedia</span>}
             </button>
           </div>
         </div>
 
+        {/* Transfer details */}
+        {method === "transfer" && config && (
+          <div className="mt-4 rounded-xl bg-card p-4 shadow-card space-y-2">
+            <p className="text-xs font-semibold text-muted-foreground">Silakan transfer ke rekening berikut:</p>
+            <div className="flex items-center justify-between rounded-lg bg-secondary/40 px-3 py-2">
+              <div className="text-sm">
+                <p className="font-semibold text-foreground">{config.bank_name || "-"}</p>
+                <p className="text-muted-foreground">a.n. {config.bank_account_holder || "-"}</p>
+                <p className="mt-1 font-mono text-base font-bold text-foreground tracking-wider">{config.bank_account_number || "-"}</p>
+              </div>
+              {config.bank_account_number && (
+                <button
+                  onClick={() => copyText(config.bank_account_number)}
+                  className="rounded-lg bg-primary/10 p-2 text-primary hover:bg-primary/20"
+                  title="Salin nomor rekening"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+            {config.qris_image_url && (
+              <div>
+                <p className="mt-2 text-xs font-semibold text-muted-foreground">Atau scan QRIS:</p>
+                <img src={config.qris_image_url} alt="QRIS" className="mt-1 h-40 w-40 rounded-lg object-cover border border-border" />
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Setelah transfer, kirim bukti pembayaran via WhatsApp.</p>
+          </div>
+        )}
+
+        {method === "cod" && config && (
+          <div className="mt-4 rounded-xl bg-card p-4 shadow-card">
+            <p className="text-sm text-foreground">{config.cod_note}</p>
+          </div>
+        )}
+
         <button
-          onClick={method === "whatsapp" ? handleWhatsApp : handleOnline}
+          onClick={submit}
           disabled={saving}
           className="mt-8 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-6 py-3 font-display text-sm font-semibold text-primary-foreground shadow-cta transition-transform hover:scale-[1.03] active:scale-[0.97] disabled:opacity-50 disabled:hover:scale-100"
         >
@@ -255,8 +395,12 @@ export default function CheckoutPage() {
             <><Loader2 className="h-4 w-4 animate-spin" /> Memproses...</>
           ) : method === "whatsapp" ? (
             <><MessageCircle className="h-4 w-4" /> Pesan via WhatsApp</>
+          ) : method === "transfer" ? (
+            <><Landmark className="h-4 w-4" /> Konfirmasi Transfer</>
+          ) : method === "cod" ? (
+            <><Wallet className="h-4 w-4" /> Pesan (Bayar di Tempat)</>
           ) : (
-            <><CreditCard className="h-4 w-4" /> Bayar Sekarang</>
+            <><CreditCard className="h-4 w-4" /> Bayar via Midtrans</>
           )}
         </button>
       </div>
