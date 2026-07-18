@@ -17,6 +17,7 @@ export default function Index() {
   const { data: products = [] } = useProducts();
   const { data: categories = [] } = useCategories();
   const bestSellers = products.filter((p) => p.is_best_seller);
+  const openPO = products.filter((p) => p.is_open_po);
 
   return (
     <div className="min-h-screen">
@@ -83,6 +84,28 @@ export default function Index() {
           </div>
         </div>
       </section>
+
+      {/* Open PO */}
+      {openPO.length > 0 && (
+        <section className="border-t border-border py-16 md:py-24">
+          <div className="container mx-auto px-4">
+            <div className="flex items-end justify-between">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">Pre-Order</span>
+                <h2 className="mt-1 text-section font-display font-bold text-foreground">Open PO</h2>
+              </div>
+              <Link to="/menu?openpo=1" className="flex items-center gap-1 text-sm text-primary hover:underline">
+                Lihat Semua <ChevronRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <div className="mt-8 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+              {openPO.map((p, i) => (
+                <ProductCard key={p.id} product={p} index={i} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Categories */}
       <section className="border-t border-border py-12 md:py-16">

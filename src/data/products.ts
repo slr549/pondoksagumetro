@@ -7,6 +7,7 @@ export interface Product {
   category_id: string | null;
   image_url: string | null;
   is_best_seller: boolean;
+  is_open_po?: boolean;
   avg_rating: number | null;
   review_count: number | null;
   stock_quantity: number;

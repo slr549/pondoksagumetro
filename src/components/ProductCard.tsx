@@ -60,11 +60,18 @@ export default function ProductCard({ product, index = 0 }: Props) {
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="lazy"
             />
-            {product.is_best_seller && (
-              <span className="absolute left-2 top-2 rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
-                Best Seller
-              </span>
-            )}
+            <div className="absolute left-2 top-2 flex flex-col gap-1">
+              {product.is_best_seller && (
+                <span className="rounded-md bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                  Best Seller
+                </span>
+              )}
+              {product.is_open_po && (
+                <span className="rounded-md bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
+                  Open PO
+                </span>
+              )}
+            </div>
             <button
               onClick={handleWishlist}
               disabled={isToggling}
