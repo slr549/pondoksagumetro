@@ -24,6 +24,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, categor
   const [categoryId, setCategoryId] = useState("");
   const [stockQuantity, setStockQuantity] = useState("0");
   const [isBestSeller, setIsBestSeller] = useState(false);
+  const [isOpenPO, setIsOpenPO] = useState(false);
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -40,6 +41,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, categor
       setCategoryId(product.category_id || "");
       setStockQuantity(String(product.stock_quantity ?? 0));
       setIsBestSeller(product.is_best_seller || false);
+      setIsOpenPO(product.is_open_po || false);
       setImageUrl(product.image_url || "");
       setImagePreview(product.image_url || null);
     } else {
@@ -49,6 +51,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, categor
       setCategoryId("");
       setStockQuantity("0");
       setIsBestSeller(false);
+      setIsOpenPO(false);
       setImageUrl("");
       setImagePreview(null);
     }
@@ -97,6 +100,7 @@ export default function ProductFormDialog({ open, onOpenChange, product, categor
         category_id: categoryId || null,
         stock_quantity: parseInt(stockQuantity) || 0,
         is_best_seller: isBestSeller,
+        is_open_po: isOpenPO,
         image_url: finalImageUrl || null,
       };
 
@@ -196,6 +200,12 @@ export default function ProductFormDialog({ open, onOpenChange, product, categor
           <div className="flex items-center gap-3">
             <Switch id="prod-best" checked={isBestSeller} onCheckedChange={setIsBestSeller} />
             <Label htmlFor="prod-best">Best Seller</Label>
+          </div>
+
+          {/* Open PO */}
+          <div className="flex items-center gap-3">
+            <Switch id="prod-openpo" checked={isOpenPO} onCheckedChange={setIsOpenPO} />
+            <Label htmlFor="prod-openpo">Open PO (Pre-Order)</Label>
           </div>
 
           {/* Submit */}

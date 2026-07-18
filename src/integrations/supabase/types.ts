@@ -212,6 +212,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_best_seller: boolean
+          is_open_po: boolean
           name: string
           price: number
           review_count: number | null
@@ -226,6 +227,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_best_seller?: boolean
+          is_open_po?: boolean
           name: string
           price: number
           review_count?: number | null
@@ -240,6 +242,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_best_seller?: boolean
+          is_open_po?: boolean
           name?: string
           price?: number
           review_count?: number | null
