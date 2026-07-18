@@ -126,6 +126,7 @@ export default function MenuPage() {
     minRating > 0,
     bestSellerOnly,
     inStockOnly,
+    openPOOnly,
   ].filter(Boolean).length;
 
   const clearFilters = () => {
