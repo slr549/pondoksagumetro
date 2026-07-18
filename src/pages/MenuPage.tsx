@@ -38,6 +38,7 @@ export default function MenuPage() {
   const [minRating, setMinRating] = useState(0);
   const [bestSellerOnly, setBestSellerOnly] = useState(false);
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [openPOOnly, setOpenPOOnly] = useState(searchParams.get("openpo") === "1");
 
   const { data: products = [], isLoading: loadingProducts } = useProducts();
   const { data: categories = [] } = useCategories();
@@ -86,6 +87,11 @@ export default function MenuPage() {
       result = result.filter((p) => p.is_best_seller);
     }
 
+    // Open PO
+    if (openPOOnly) {
+      result = result.filter((p) => p.is_open_po);
+    }
+
     // In stock
     if (inStockOnly) {
       result = result.filter((p) => p.stock_quantity > 0);
@@ -111,7 +117,7 @@ export default function MenuPage() {
     }
 
     return sorted;
-  }, [products, activeCategory, search, sortBy, priceRange, effectiveMaxPrice, maxPrice, minRating, bestSellerOnly, inStockOnly]);
+  }, [products, activeCategory, search, sortBy, priceRange, effectiveMaxPrice, maxPrice, minRating, bestSellerOnly, openPOOnly, inStockOnly]);
 
   const categoryNames = ["Semua", ...categories.map((c) => c.name)];
 
@@ -127,6 +133,7 @@ export default function MenuPage() {
     setMinRating(0);
     setBestSellerOnly(false);
     setInStockOnly(false);
+    setOpenPOOnly(false);
     setSearch("");
     setSortBy("newest");
     setActiveCategory("Semua");
@@ -247,6 +254,16 @@ export default function MenuPage() {
                 }`}
               >
                 🔥 Best Seller
+              </button>
+              <button
+                onClick={() => setOpenPOOnly(!openPOOnly)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  openPOOnly
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                📦 Open PO
               </button>
               <button
                 onClick={() => setInStockOnly(!inStockOnly)}
